@@ -1,16 +1,69 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, BarChart3, Shield, Zap } from "lucide-react";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
-  return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
-  );
-};
+const Index = () => (
+  <div className="min-h-screen gradient-hero">
+    {/* Nav */}
+    <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
+      <h1 className="font-display text-xl font-bold text-gradient">CoopSim</h1>
+      <div className="flex items-center gap-3">
+        <Link to="/login">
+          <Button variant="ghost" className="text-foreground hover:bg-accent">Sign In</Button>
+        </Link>
+        <Link to="/register">
+          <Button className="gradient-primary text-primary-foreground hover:opacity-90">Get Started</Button>
+        </Link>
+      </div>
+    </nav>
 
-const Index = PlaceholderIndex;
+    {/* Hero */}
+    <section className="max-w-7xl mx-auto px-8 pt-20 pb-32">
+      <div className="max-w-2xl animate-fade-in">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent text-accent-foreground mb-6">
+          Cooperative Decision Support
+        </span>
+        <h2 className="font-display text-5xl font-extrabold text-foreground leading-tight">
+          Simulate policies<br />
+          <span className="text-gradient">before you implement</span>
+        </h2>
+        <p className="text-lg text-muted-foreground mt-6 leading-relaxed max-w-lg">
+          Make data-driven decisions for your cooperative. Compare current and proposed policies with real-time simulation and impact analysis.
+        </p>
+        <div className="flex items-center gap-4 mt-8">
+          <Link to="/register">
+            <Button className="gradient-primary text-primary-foreground hover:opacity-90 px-6 py-3" size="lg">
+              Start Simulating <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+          <Link to="/login">
+            <Button variant="outline" className="border-border text-foreground hover:bg-accent" size="lg">
+              Sign In
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </section>
+
+    {/* Features */}
+    <section className="max-w-7xl mx-auto px-8 pb-24">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { icon: <BarChart3 className="w-6 h-6" />, title: "Policy Comparison", desc: "Side-by-side comparison of current vs proposed policies with visual analytics." },
+          { icon: <Zap className="w-6 h-6" />, title: "Real-Time Simulation", desc: "Instant impact analysis showing projected outcomes across key metrics." },
+          { icon: <Shield className="w-6 h-6" />, title: "Risk Assessment", desc: "Comprehensive risk scoring to ensure policy changes protect member interests." },
+        ].map((f) => (
+          <div key={f.title} className="glass-elevated rounded-xl p-6 animate-fade-in">
+            <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-accent-foreground mb-4">
+              {f.icon}
+            </div>
+            <h3 className="font-display font-semibold text-foreground mb-2">{f.title}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+);
 
 export default Index;
