@@ -18,7 +18,6 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ─── Auth ────────────────────────────────────────────────────
 
 export interface LoginPayload {
   email: string;
