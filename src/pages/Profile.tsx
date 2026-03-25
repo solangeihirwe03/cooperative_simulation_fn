@@ -107,7 +107,7 @@ const Profile = () => {
                   <label className="text-sm font-medium text-foreground">Join Date</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input className="pl-10" value={profile.join_date ? new Date(profile.join_date).toLocaleDateString() : ""} disabled className="bg-muted" />
+                    <Input className="pl-10 bg-muted" value={profile.join_date ? new Date(profile.join_date).toLocaleDateString() : ""} disabled />
                   </div>
                 </div>
               </div>
