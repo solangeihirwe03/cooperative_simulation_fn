@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Mail, Building, Phone, Shield, Save } from "lucide-react";
+import { User, Mail, Phone, Shield, Save, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { memberApi, type MemberProfile as ProfileType } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -61,8 +61,8 @@ const Profile = () => {
               <div>
                 <h2 className="font-display text-xl font-semibold text-foreground">{profile.first_name} {profile.last_name}</h2>
                 <p className="text-sm text-muted-foreground">{profile.email}</p>
-                <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
-                  <Shield className="w-3 h-3" /> Active Member
+                <span className={`inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${profile.member_status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                  <Shield className="w-3 h-3" /> {profile.member_status ?? "unknown"}
                 </span>
               </div>
             </div>
@@ -91,24 +91,25 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Phone</label>
+                <label className="text-sm font-medium text-foreground">Phone Number</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input className="pl-10" value={profile.phone ?? ""} onChange={(e) => handleChange("phone", e.target.value)} />
+                  <Input className="pl-10" value={profile.phone_number ?? ""} onChange={(e) => handleChange("phone_number", e.target.value)} />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Cooperative</label>
-                <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input className="pl-10" value={profile.cooperative ?? ""} onChange={(e) => handleChange("cooperative", e.target.value)} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Role</label>
+                  <Input value={profile.role ?? ""} disabled className="bg-muted" />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Role</label>
-                <Input value={profile.role ?? ""} disabled className="bg-muted" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Join Date</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input className="pl-10" value={profile.join_date ? new Date(profile.join_date).toLocaleDateString() : ""} disabled className="bg-muted" />
+                  </div>
+                </div>
               </div>
 
               <Button type="submit" disabled={saving} className="gradient-primary text-primary-foreground hover:opacity-90">
