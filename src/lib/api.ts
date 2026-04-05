@@ -18,7 +18,6 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ─── Auth ────────────────────────────────────────────────────
 
 export interface LoginPayload {
   email: string;
@@ -30,13 +29,15 @@ export interface RegisterPayload {
   last_name: string;
   email: string;
   password: string;
-  cooperative: string;
+  phone_number: string;
+  cooperative_name: string;
 }
 
 export interface AuthResponse {
   access_token: string;
   token_type: string;
   user: MemberProfile;
+  role: string;
 }
 
 export const authApi = {
@@ -60,20 +61,21 @@ export const authApi = {
 // ─── Member Profile ──────────────────────────────────────────
 
 export interface MemberProfile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  cooperative?: string;
+  member_id?: number;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone_number?: string;
+  member_status?: string;
   role?: string;
+  join_date?: string;
 }
 
 export const memberApi = {
-  getProfile: () => request<MemberProfile>("/members/me"),
+  getProfile: () => request<MemberProfile>("/members/member_profile"),
 
   updateProfile: (data: Partial<MemberProfile>) =>
-    request<MemberProfile>("/members/me", {
+    request<MemberProfile>("/members/update_member_profile", {
       method: "PUT",
       body: JSON.stringify(data),
     }),
