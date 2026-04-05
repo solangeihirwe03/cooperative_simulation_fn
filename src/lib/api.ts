@@ -29,13 +29,15 @@ export interface RegisterPayload {
   last_name: string;
   email: string;
   password: string;
-  cooperative: string;
+  phone_number: string;
+  cooperative_name: string;
 }
 
 export interface AuthResponse {
   access_token: string;
   token_type: string;
   user: MemberProfile;
+  role: string;
 }
 
 export const authApi = {
@@ -59,10 +61,10 @@ export const authApi = {
 // ─── Member Profile ──────────────────────────────────────────
 
 export interface MemberProfile {
-  member_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
+  member_id?: number;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
   phone_number?: string;
   member_status?: string;
   role?: string;

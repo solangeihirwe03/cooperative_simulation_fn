@@ -6,19 +6,30 @@ import { User, Mail, Phone, Shield, Save, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { memberApi, type MemberProfile as ProfileType } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { profile } from "console";
+import { MemberProfile } from "@/lib/api";
 
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [originalProfile, setOriginalProfile] = useState<ProfileType | null>(null)
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    memberApi.getProfile()
-      .then(setProfile)
-      .catch(() => toast({ title: "Failed to load profile", variant: "destructive" }))
-      .finally(() => setLoading(false));
+    const fetchProfile = async () => {
+      try {
+        const data = await memberApi.getProfile();
+
+        setProfile(data);
+        setOriginalProfile({ ...data });
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const handleChange = (field: keyof ProfileType, value: string) => {
@@ -30,11 +41,22 @@ const Profile = () => {
     if (!profile) return;
     setSaving(true);
     try {
-      const updated = await memberApi.updateProfile(profile);
+      const updateData: MemberProfile = {};
+
+      if (profile.first_name !== originalProfile.first_name)
+        updateData.first_name = profile.first_name;
+
+      if (profile.last_name !== originalProfile.last_name)
+        updateData.last_name = profile.last_name;
+
+      if (profile.phone_number !== originalProfile.phone_number)
+        updateData.phone_number = profile.phone_number;
+      const updated = await memberApi.updateProfile(updateData);
+      console.log("Update response:", updated);
       setProfile(updated);
-      toast({ title: "Profile updated!" });
+      console.log("Profile updated successfully:", profile);
     } catch (err: any) {
-      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+      toast({ title: "Update failed", description: err.message });
     } finally {
       setSaving(false);
     }
@@ -86,7 +108,7 @@ const Profile = () => {
                 <label className="text-sm font-medium text-foreground">Email</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input className="pl-10" value={profile.email} type="email" onChange={(e) => handleChange("email", e.target.value)} />
+                  <Input className="pl-10 bg-muted" value={profile.email} type="email" disabled />
                 </div>
               </div>
 
@@ -94,7 +116,7 @@ const Profile = () => {
                 <label className="text-sm font-medium text-foreground">Phone Number</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input className="pl-10" value={profile.phone_number ?? ""} onChange={(e) => handleChange("phone_number", e.target.value)} />
+                  <Input className="pl-10" value={profile.phone_number} onChange={(e) => handleChange("phone_number", e.target.value)} />
                 </div>
               </div>
 
