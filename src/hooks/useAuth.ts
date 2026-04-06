@@ -4,7 +4,7 @@ import type { MemberProfile } from "@/lib/api";
 export interface AuthContextType {
   user: MemberProfile | null;
   token: string | null;
-  setAuth: (token: string, user: MemberProfile) => void;
+  setAuth: (token: string, user: {role: string}) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }

@@ -1,8 +1,9 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { Users, FileText, FlaskConical, TrendingUp, ArrowRight } from "lucide-react";
+import { Users, FileText, FlaskConical, TrendingUp, ArrowRight, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useAuth } from "@/hooks/useAuth";
 
 const barData = [
   { name: "Jan", simulations: 12 },
@@ -27,12 +28,21 @@ const recentSimulations = [
   { id: 3, name: "Loan Policy Revision", status: "Completed", date: "Mar 21, 2026", impact: "Positive" },
 ];
 
-const Dashboard = () => (
+const Dashboard = () => {
+  const { user } = useAuth();
+
+  return (
   <DashboardLayout>
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Cooperative simulation overview</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">Cooperative simulation overview</p>
+        </div>
+          <div className="flex items-center gap-2 px-4 py-2 glass-elevated rounded-lg">
+            <Building className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">cooperative_name</span>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -121,6 +131,7 @@ const Dashboard = () => (
       </div>
     </div>
   </DashboardLayout>
-);
+  );
+};
 
 export default Dashboard;

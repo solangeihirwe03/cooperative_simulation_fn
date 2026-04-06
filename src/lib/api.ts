@@ -34,7 +34,7 @@ export interface RegisterPayload {
 }
 
 export interface AuthResponse {
-  access_token: string;
+  token: string;
   token_type: string;
   user: MemberProfile;
   role: string;
@@ -66,9 +66,34 @@ export interface MemberProfile {
   last_name?: string;
   email?: string;
   phone_number?: string;
+  cooperative?: {
+    cooperative_id: number;
+    cooperative_name: string;
+  };
   member_status?: string;
   role?: string;
   join_date?: string;
+}
+
+export interface MemberContribution {
+  member_contribution_id: number;
+  member_id: number;
+  contribution_amount: number;
+  contribution_date: string;
+}
+
+export interface MemberLoan {
+  member_id: number;
+  loan_amount: number;
+  interest_rate: number;
+  repayment_period: number;
+  loan_id: number;
+  issue_date: string;
+  loan_status: string;
+  interest_payable: number;
+  repayment_amount: number;
+  amount_paid: number;
+  loan_balance: number;
 }
 
 export const memberApi = {
@@ -79,4 +104,6 @@ export const memberApi = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+  getContributions: () => request<MemberContribution[]>("/members/my_contributions"),
+  getLoans: () => request<MemberLoan[]>("/loans/me"),
 };

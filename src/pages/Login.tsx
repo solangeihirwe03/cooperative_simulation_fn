@@ -33,7 +33,8 @@ const Login = () => {
           email: values.email,
           password: values.password
         });
-        setAuth(res.access_token, res.user);
+        console.log("Login response:", res);
+        setAuth(res.token, { role: res.role });
         if (res.role === "admin") {
           navigate("/dashboard");
         } else if (res.role === "member") {

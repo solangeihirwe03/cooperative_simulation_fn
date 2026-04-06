@@ -10,6 +10,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const setAuth = useCallback((newToken: string, newUser: MemberProfile) => {
     localStorage.setItem("access_token", newToken);
+    localStorage.setItem("user_role", newUser.role || "member");
     setToken(newToken);
     setUser(newUser);
   }, []);
