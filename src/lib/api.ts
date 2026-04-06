@@ -34,7 +34,7 @@ export interface RegisterPayload {
 }
 
 export interface AuthResponse {
-  access_token: string;
+  token: string;
   token_type: string;
   user: MemberProfile;
   role: string;
