@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
 import { Users, FileText, FlaskConical, TrendingUp, ArrowRight, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
+import { adminApi, type AdminMember } from "@/lib/api";
 
 const barData = [
   { name: "Jan", simulations: 12 },
@@ -30,6 +32,14 @@ const recentSimulations = [
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [members, setMembers] = useState<AdminMember[]>([]);
+
+  useEffect(() => {
+    adminApi.getMembers().then(setMembers).catch(() => {});
+  }, []);
+
+  const totalMembers = members.length;
+  const cooperativeName = members[0]?.cooperative?.cooperative_name || user?.cooperative?.cooperative_name || "—";
 
   return (
   <DashboardLayout>
@@ -41,12 +51,12 @@ const Dashboard = () => {
         </div>
           <div className="flex items-center gap-2 px-4 py-2 glass-elevated rounded-lg">
             <Building className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">cooperative_name</span>
+            <span className="text-sm font-medium text-foreground">{cooperativeName}</span>
           </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard title="Total Members" value="1,284" icon={<Users className="w-6 h-6" />} trend={{ value: "12% this month", positive: true }} />
+        <StatCard title="Total Members" value={totalMembers.toLocaleString()} icon={<Users className="w-6 h-6" />} trend={{ value: `${members.filter(m => m.member_status === "active").length} active`, positive: true }} />
         <StatCard title="Active Policies" value="32" icon={<FileText className="w-6 h-6" />} trend={{ value: "3 new", positive: true }} />
         <StatCard title="Simulations Run" value="156" icon={<FlaskConical className="w-6 h-6" />} trend={{ value: "24 this week", positive: true }} />
         <StatCard title="Avg. Impact Score" value="78%" icon={<TrendingUp className="w-6 h-6" />} trend={{ value: "5% improvement", positive: true }} />
