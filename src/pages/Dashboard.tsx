@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
 import { Users, FileText, FlaskConical, TrendingUp, ArrowRight, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
+import { adminApi, type AdminMember } from "@/lib/api";
 
 const barData = [
   { name: "Jan", simulations: 12 },
