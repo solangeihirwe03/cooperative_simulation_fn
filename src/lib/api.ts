@@ -129,6 +129,8 @@ export const memberApi = {
   getLoans: () => request<MemberLoan[]>("/loans/me"),
 };
 
+export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
+
 export const adminApi = {
   getMembers: () => request<AdminMember[]>("/admin/members"),
   createLoan: (memberId: number, data: CreateLoanPayload) =>
@@ -136,4 +138,11 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  updateLoanStatus: (loanId: number, loanStatus: LoanStatus) =>
+    request<MemberLoan>(`/loans/${loanId}`, {
+      method: "PUT",
+      body: JSON.stringify({ loan_status: loanStatus }),
+    }),
+  getMemberLoans: (memberId: number) =>
+    request<MemberLoan[]>(`/loans/members/${memberId}`),
 };
