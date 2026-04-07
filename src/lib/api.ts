@@ -96,6 +96,27 @@ export interface MemberLoan {
   loan_balance: number;
 }
 
+export interface AdminMember {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  member_status: string;
+  role: string;
+  join_date: string;
+  cooperative: {
+    cooperative_id: number;
+    cooperative_name: string;
+  };
+}
+
+export interface CreateLoanPayload {
+  loan_amount: number;
+  interest_rate: number;
+  repayment_period: number;
+}
+
 export const memberApi = {
   getProfile: () => request<MemberProfile>("/members/member_profile"),
 
@@ -106,4 +127,22 @@ export const memberApi = {
     }),
   getContributions: () => request<MemberContribution[]>("/members/my_contributions"),
   getLoans: () => request<MemberLoan[]>("/loans/me"),
+};
+
+export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
+
+export const adminApi = {
+  getMembers: () => request<AdminMember[]>("/admin/members"),
+  createLoan: (memberId: number, data: CreateLoanPayload) =>
+    request<MemberLoan>(`/loans/member/${memberId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+    updateLoanStatus: (loan_id: number, loanStatus: LoanStatus) =>
+    request<MemberLoan>(`/loans/${loan_id}`, {
+      method: "PUT",
+      body: JSON.stringify({ loan_status: loanStatus }),
+    }),
+  getMemberLoans: (member_id: number) =>
+    request<MemberLoan[]>(`/loans/member/${member_id}`),
 };
