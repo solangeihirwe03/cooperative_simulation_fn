@@ -56,7 +56,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard title="Total Members" value="1,284" icon={<Users className="w-6 h-6" />} trend={{ value: "12% this month", positive: true }} />
+        <StatCard title="Total Members" value={totalMembers.toLocaleString()} icon={<Users className="w-6 h-6" />} trend={{ value: `${members.filter(m => m.member_status === "active").length} active`, positive: true }} />
         <StatCard title="Active Policies" value="32" icon={<FileText className="w-6 h-6" />} trend={{ value: "3 new", positive: true }} />
         <StatCard title="Simulations Run" value="156" icon={<FlaskConical className="w-6 h-6" />} trend={{ value: "24 this week", positive: true }} />
         <StatCard title="Avg. Impact Score" value="78%" icon={<TrendingUp className="w-6 h-6" />} trend={{ value: "5% improvement", positive: true }} />
