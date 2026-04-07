@@ -32,6 +32,14 @@ const recentSimulations = [
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [members, setMembers] = useState<AdminMember[]>([]);
+
+  useEffect(() => {
+    adminApi.getMembers().then(setMembers).catch(() => {});
+  }, []);
+
+  const totalMembers = members.length;
+  const cooperativeName = members[0]?.cooperative?.cooperative_name || user?.cooperative?.cooperative_name || "—";
 
   return (
   <DashboardLayout>
@@ -43,7 +51,7 @@ const Dashboard = () => {
         </div>
           <div className="flex items-center gap-2 px-4 py-2 glass-elevated rounded-lg">
             <Building className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">cooperative_name</span>
+            <span className="text-sm font-medium text-foreground">{cooperativeName}</span>
           </div>
       </div>
 
