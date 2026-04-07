@@ -191,13 +191,13 @@ const Profile = () => {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/50">
+                        <TableHead>Issue Date</TableHead>
                           <TableHead>Loan ID</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Balance</TableHead>
-                          <TableHead>Rate</TableHead>
-                          <TableHead>Repayment</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Issue Date</TableHead>
+                          <TableHead>Loan amount</TableHead>
+                          <TableHead>loan balance</TableHead>
+                          <TableHead>Interest rate</TableHead>
+                          <TableHead>Repayment amount</TableHead>
+                          <TableHead>Loan status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -205,17 +205,17 @@ const Profile = () => {
                           const sc = statusConfig[loan.loan_status] ?? statusConfig.pending;
                           return (
                             <TableRow key={loan.loan_id}>
-                              <TableCell className="font-medium">LN-{loan.loan_id}</TableCell>
-                              <TableCell>{fmt(loan.loan_amount)}</TableCell>
-                              <TableCell>{fmt(loan.loan_balance)}</TableCell>
+                              <TableCell className="text-muted-foreground">{new Date(loan.issue_date).toLocaleDateString()}</TableCell>
+                              <TableCell className="font-medium">{loan.loan_id}</TableCell>
+                              <TableCell>{loan.loan_amount}</TableCell>
+                              <TableCell>{loan.loan_balance}</TableCell>
                               <TableCell>{loan.interest_rate}%</TableCell>
-                              <TableCell>{fmt(loan.repayment_amount)}</TableCell>
+                              <TableCell>{loan.repayment_amount}</TableCell>
                               <TableCell>
                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${sc.color}`}>
                                   {sc.icon} {loan.loan_status}
                                 </span>
                               </TableCell>
-                              <TableCell className="text-muted-foreground">{new Date(loan.issue_date).toLocaleDateString()}</TableCell>
                             </TableRow>
                           );
                         })}

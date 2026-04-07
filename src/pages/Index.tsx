@@ -9,7 +9,7 @@ const Index = () => {
     const token = localStorage.getItem("access_token");
     const role = localStorage.getItem("user_role");
 
-    if (!token) {
+    if (!token || !role) {
       navigate("/register");
       return;
     }
