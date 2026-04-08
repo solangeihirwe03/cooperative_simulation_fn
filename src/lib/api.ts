@@ -130,9 +130,22 @@ export const memberApi = {
 };
 
 export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
+export type MemberStatus = "active" | "inactive" | "suspended";
+export type MemberRole = "admin" | "member";
 
 export const adminApi = {
   getMembers: () => request<AdminMember[]>("/admin/members"),
+  getMember: (memberId: number) => request<AdminMember>(`/admin/members/${memberId}`),
+  updateMemberRole: (memberId: number, role: MemberRole) =>
+    request<AdminMember>(`/admin/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    }),
+  updateMemberStatus: (memberId: number, member_status: MemberStatus) =>
+    request<AdminMember>(`/admin/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ member_status }),
+    }),
   createLoan: (memberId: number, data: CreateLoanPayload) =>
     request<MemberLoan>(`/loans/members/${memberId}`, {
       method: "POST",
