@@ -151,11 +151,12 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  getAllLoans: () => request<MemberLoan[]>("/loans/members"),
+  getMemberLoans: (memberId: number) =>
+    request<MemberLoan[]>(`/loans/${memberId}`),
   updateLoanStatus: (loanId: number, loanStatus: LoanStatus) =>
-    request<MemberLoan>(`/loans/${loanId}`, {
+    request<MemberLoan>(`/loans/${loanId}/status`, {
       method: "PUT",
       body: JSON.stringify({ loan_status: loanStatus }),
     }),
-  getMemberLoans: (memberId: number) =>
-    request<MemberLoan[]>(`/loans/members/${memberId}`),
 };
