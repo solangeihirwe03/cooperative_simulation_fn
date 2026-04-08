@@ -1,11 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { Users, FileText, FlaskConical, TrendingUp, ArrowRight, Building } from "lucide-react";
+import { Users, FileText, FlaskConical, TrendingUp, ArrowRight, Building, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { adminApi, type AdminMember } from "@/lib/api";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import MemberDetailDialog from "@/components/dashboard/MemberDetailDialog";
 
 const barData = [
   { name: "Jan", simulations: 12 },
@@ -30,16 +34,33 @@ const recentSimulations = [
   { id: 3, name: "Loan Policy Revision", status: "Completed", date: "Mar 21, 2026", impact: "Positive" },
 ];
 
+const statusVariant: Record<string, string> = {
+  active: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
+  inactive: "bg-muted text-muted-foreground border-border",
+  suspended: "bg-destructive/10 text-destructive border-destructive/20",
+};
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [members, setMembers] = useState<AdminMember[]>([]);
+  const [selectedMember, setSelectedMember] = useState<AdminMember | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchMembers = useCallback(() => {
     adminApi.getMembers().then(setMembers).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
+
   const totalMembers = members.length;
   const cooperativeName = members[0]?.cooperative?.cooperative_name || user?.cooperative?.cooperative_name || "—";
+
+  const handleViewMember = (member: AdminMember) => {
+    setSelectedMember(member);
+    setDialogOpen(true);
+  };
 
   return (
   <DashboardLayout>
@@ -60,6 +81,58 @@ const Dashboard = () => {
         <StatCard title="Active Policies" value="32" icon={<FileText className="w-6 h-6" />} trend={{ value: "3 new", positive: true }} />
         <StatCard title="Simulations Run" value="156" icon={<FlaskConical className="w-6 h-6" />} trend={{ value: "24 this week", positive: true }} />
         <StatCard title="Avg. Impact Score" value="78%" icon={<TrendingUp className="w-6 h-6" />} trend={{ value: "5% improvement", positive: true }} />
+      </div>
+
+      {/* Members Table */}
+      <div className="glass-elevated rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-semibold text-foreground">Cooperative Members</h3>
+          <span className="text-xs text-muted-foreground">{totalMembers} members</span>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Joined</TableHead>
+              <TableHead className="text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {members.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  No members found
+                </TableCell>
+              </TableRow>
+            ) : (
+              members.map((m) => (
+                <TableRow key={m.member_id}>
+                  <TableCell className="font-medium text-foreground">{m.first_name} {m.last_name}</TableCell>
+                  <TableCell className="text-muted-foreground">{m.email}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize text-xs">{m.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${statusVariant[m.member_status] || statusVariant.inactive}`}>
+                      {m.member_status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">
+                    {new Date(m.join_date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80" onClick={() => handleViewMember(m)}>
+                      <Eye className="w-4 h-4 mr-1" /> View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -140,6 +213,16 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
+
+    <MemberDetailDialog
+      member={selectedMember}
+      open={dialogOpen}
+      onOpenChange={setDialogOpen}
+      onUpdated={() => {
+        fetchMembers();
+        setDialogOpen(false);
+      }}
+    />
   </DashboardLayout>
   );
 };
