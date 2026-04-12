@@ -18,7 +18,6 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ─── Auth ────────────────────────────────────────────────────
 
 export interface LoginPayload {
   email: string;
@@ -30,13 +29,15 @@ export interface RegisterPayload {
   last_name: string;
   email: string;
   password: string;
-  cooperative: string;
+  phone_number: string;
+  cooperative_name: string;
 }
 
 export interface AuthResponse {
-  access_token: string;
+  token: string;
   token_type: string;
   user: MemberProfile;
+  role: string;
 }
 
 export const authApi = {
@@ -60,21 +61,88 @@ export const authApi = {
 // ─── Member Profile ──────────────────────────────────────────
 
 export interface MemberProfile {
-  id: string;
+  member_id?: number;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone_number?: string;
+  cooperative?: {
+    cooperative_id: number;
+    cooperative_name: string;
+  };
+  member_status?: string;
+  role?: string;
+  join_date?: string;
+}
+
+export interface MemberContribution {
+  member_contribution_id: number;
+  member_id: number;
+  contribution_amount: number;
+  contribution_date: string;
+}
+
+export interface MemberLoan {
+  member_id: number;
+  loan_amount: number;
+  interest_rate: number;
+  repayment_period: number;
+  loan_id: number;
+  issue_date: string;
+  loan_status: string;
+  interest_payable: number;
+  repayment_amount: number;
+  amount_paid: number;
+  loan_balance: number;
+}
+
+export interface AdminMember {
+  member_id: number;
   first_name: string;
   last_name: string;
   email: string;
-  phone?: string;
-  cooperative?: string;
-  role?: string;
+  phone_number: string;
+  member_status: string;
+  role: string;
+  join_date: string;
+  cooperative: {
+    cooperative_id: number;
+    cooperative_name: string;
+  };
+}
+
+export interface CreateLoanPayload {
+  loan_amount: number;
+  interest_rate: number;
+  repayment_period: number;
 }
 
 export const memberApi = {
-  getProfile: () => request<MemberProfile>("/members/me"),
+  getProfile: () => request<MemberProfile>("/members/member_profile"),
 
   updateProfile: (data: Partial<MemberProfile>) =>
-    request<MemberProfile>("/members/me", {
+    request<MemberProfile>("/members/update_member_profile", {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+  getContributions: () => request<MemberContribution[]>("/members/my_contributions"),
+  getLoans: () => request<MemberLoan[]>("/loans/me"),
+};
+
+export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
+
+export const adminApi = {
+  getMembers: () => request<AdminMember[]>("/admin/members"),
+  createLoan: (memberId: number, data: CreateLoanPayload) =>
+    request<MemberLoan>(`/loans/member/${memberId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+    updateLoanStatus: (loan_id: number, loanStatus: LoanStatus) =>
+    request<MemberLoan>(`/loans/${loan_id}`, {
+      method: "PUT",
+      body: JSON.stringify({ loan_status: loanStatus }),
+    }),
+  getMemberLoans: (member_id: number) =>
+    request<MemberLoan[]>(`/loans/member/${member_id}`),
 };
