@@ -159,4 +159,18 @@ export const adminApi = {
       method: "PUT",
       body: JSON.stringify({ loan_status: loanStatus }),
     }),
+  createContribution: (memberId: number, contribution_amount: number) =>
+    request<MemberContribution>(`/admin/members/${memberId}/member_contribution`, {
+      method: "POST",
+      body: JSON.stringify({ contribution_amount }),
+    }),
+  getAllContributions: () =>
+    request<MemberContributionSummary[]>("/member_contribution/members"),
 };
+
+export interface MemberContributionSummary {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  total_contribution: number;
+}
