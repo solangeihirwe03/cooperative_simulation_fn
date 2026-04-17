@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, FlaskConical, User, LogOut, Banknote } from "lucide-react";
+import { LayoutDashboard, Users, FileText, FlaskConical, User, LogOut, Banknote,Wallet } from "lucide-react";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/loans", label: "Loan Management", icon: Banknote },
+  { to: "/contributions", label: "Contributions", icon: Wallet },
   { to: "/policy", label: "Policy Entry", icon: FileText },
   { to: "/simulation", label: "Simulation", icon: FlaskConical },
   { to: "/profile", label: "Profile", icon: User },

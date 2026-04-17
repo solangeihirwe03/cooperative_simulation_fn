@@ -117,6 +117,13 @@ export interface CreateLoanPayload {
   repayment_period: number;
 }
 
+export interface MemberContributionSummary {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  total_contribution: number;
+}
+
 export const memberApi = {
   getProfile: () => request<MemberProfile>("/members/member_profile"),
 
@@ -130,19 +137,40 @@ export const memberApi = {
 };
 
 export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
+export type MemberStatus = "active" | "inactive" | "suspended";
+export type MemberRole = "admin" | "member";
 
 export const adminApi = {
   getMembers: () => request<AdminMember[]>("/admin/members"),
+  getMember: (memberId: number) => request<AdminMember>(`/admin/members/${memberId}`),
+  updateMemberRole: (memberId: number, role: MemberRole) =>
+    request<AdminMember>(`/admin/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    }),
+  updateMemberStatus: (memberId: number, member_status: MemberStatus) =>
+    request<AdminMember>(`/admin/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ member_status }),
+    }),
   createLoan: (memberId: number, data: CreateLoanPayload) =>
-    request<MemberLoan>(`/loans/member/${memberId}`, {
+    request<MemberLoan>(`/loans/members/${memberId}`, {
       method: "POST",
       body: JSON.stringify(data),
     }),
-    updateLoanStatus: (loan_id: number, loanStatus: LoanStatus) =>
-    request<MemberLoan>(`/loans/${loan_id}`, {
+  getAllLoans: () => request<MemberLoan[]>("/loans/members"),
+  getMemberLoans: (memberId: number) =>
+    request<MemberLoan[]>(`/loans/${memberId}`),
+  updateLoanStatus: (loanId: number, loanStatus: LoanStatus) =>
+    request<MemberLoan>(`/loans/${loanId}/status`, {
       method: "PUT",
       body: JSON.stringify({ loan_status: loanStatus }),
     }),
-  getMemberLoans: (member_id: number) =>
-    request<MemberLoan[]>(`/loans/member/${member_id}`),
+  createContribution: (memberId: number, contribution_amount: number) =>
+    request<MemberContribution>(`/admin/members/${memberId}/member_contribution`, {
+      method: "POST",
+      body: JSON.stringify({ contribution_amount }),
+    }),
+  getAllContributions: () =>
+    request<MemberContributionSummary[]>("/member_contribution/members"),
 };
