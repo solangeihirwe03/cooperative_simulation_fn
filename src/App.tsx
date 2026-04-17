@@ -14,6 +14,7 @@ import Profile from "./pages/Profile.tsx";
 import Loans from "./pages/Loans.tsx";
 import Contributions from "./pages/Contributions.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -28,12 +29,12 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/policy" element={<PolicyForm />} />
-            <Route path="/simulation" element={<Simulation />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/loans" element={<Loans />} />
-            <Route path="/contributions" element={<Contributions />} />
+            <Route path="/dashboard" element={<ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>} />
+            <Route path="/policy" element={<ProtectedRoute adminOnly><PolicyForm /></ProtectedRoute>} />
+            <Route path="/simulation" element={<ProtectedRoute adminOnly><Simulation /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/loans" element={<ProtectedRoute adminOnly><Loans /></ProtectedRoute>} />
+            <Route path="/contributions" element={<ProtectedRoute adminOnly><Contributions /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
