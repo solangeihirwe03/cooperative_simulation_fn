@@ -174,3 +174,43 @@ export interface MemberContributionSummary {
   last_name: string;
   total_contribution: number;
 }
+
+// ─── Simulation ──────────────────────────────────────────────
+
+export interface SimulationPayload {
+  contribution_amount: number;
+  min_shares: number;
+  max_shares: number;
+  loan_multiplier: number;
+  interest_rate: number;
+  repayment_period: number;
+  penalty_rate: number;
+}
+
+export type ScenarioStatus = "success" | "fail" | "risky";
+
+export interface ScenarioResult {
+  field: string;
+  status: ScenarioStatus;
+  message: string;
+}
+
+export interface SimulationIndicators {
+  average_contribution_per_member: number;
+  default_rate: number;
+  loan_utilization_ratio: number;
+}
+
+export interface SimulationResponse {
+  summary: string;
+  scenarios: ScenarioResult[];
+  indicators: SimulationIndicators;
+}
+
+export const simulationApi = {
+  run: (data: SimulationPayload) =>
+    request<SimulationResponse>("/simulation/run", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
