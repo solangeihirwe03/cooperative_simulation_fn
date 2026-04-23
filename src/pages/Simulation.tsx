@@ -1,122 +1,189 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { FlaskConical, ArrowRight, CheckCircle2, XCircle, AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FlaskConical, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { toast } from "sonner";
+import { simulationApi, SimulationPayload, SimulationResponse, ScenarioStatus } from "@/lib/api";
 
-const comparisonData = [
-  { metric: "Member Retention", current: 85, proposed: 92 },
-  { metric: "Revenue Impact", current: 70, proposed: 78 },
-  { metric: "Member Satisfaction", current: 72, proposed: 88 },
-  { metric: "Risk Score", current: 45, proposed: 32 },
-  { metric: "Growth Rate", current: 60, proposed: 75 },
-];
+const defaultPayload: SimulationPayload = {
+  contribution_amount: 1000,
+  min_shares: 1,
+  max_shares: 10,
+  loan_multiplier: 6,
+  interest_rate: 12.5,
+  repayment_period: 10,
+  penalty_rate: 2,
+};
+
+const fieldLabels: Record<keyof SimulationPayload, string> = {
+  contribution_amount: "Contribution Amount",
+  min_shares: "Minimum Shares",
+  max_shares: "Maximum Shares",
+  loan_multiplier: "Loan Multiplier",
+  interest_rate: "Interest Rate (%)",
+  repayment_period: "Repayment Period (months)",
+  penalty_rate: "Penalty Rate (%)",
+};
+
+const statusStyles: Record<ScenarioStatus, { bg: string; text: string; icon: JSX.Element; label: string }> = {
+  success: {
+    bg: "bg-success/10 border-success/20",
+    text: "text-success",
+    icon: <CheckCircle2 className="w-5 h-5" />,
+    label: "Success",
+  },
+  risky: {
+    bg: "bg-warning/10 border-warning/20",
+    text: "text-warning",
+    icon: <AlertTriangle className="w-5 h-5" />,
+    label: "Risky",
+  },
+  fail: {
+    bg: "bg-destructive/10 border-destructive/20",
+    text: "text-destructive",
+    icon: <XCircle className="w-5 h-5" />,
+    label: "Fail",
+  },
+};
 
 const Simulation = () => {
-  const [simulated, setSimulated] = useState(false);
+  const [payload, setPayload] = useState<SimulationPayload>(defaultPayload);
+  const [result, setResult] = useState<SimulationResponse | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const results = [
-    { label: "Overall Impact Score", value: "82%", icon: <TrendingUp className="w-5 h-5" />, status: "positive" as const },
-    { label: "Financial Viability", value: "High", icon: <CheckCircle2 className="w-5 h-5" />, status: "positive" as const },
-    { label: "Member Impact", value: "+15%", icon: <TrendingUp className="w-5 h-5" />, status: "positive" as const },
-    { label: "Risk Assessment", value: "Low", icon: <CheckCircle2 className="w-5 h-5" />, status: "positive" as const },
-    { label: "Implementation Cost", value: "Moderate", icon: <AlertTriangle className="w-5 h-5" />, status: "warning" as const },
-    { label: "Timeline to Effect", value: "3 months", icon: <Minus className="w-5 h-5" />, status: "neutral" as const },
-  ];
+  const handleChange = (key: keyof SimulationPayload, value: string) => {
+    setPayload((p) => ({ ...p, [key]: Number(value) }));
+  };
+
+  const handleRun = async () => {
+    setLoading(true);
+    try {
+      const res = await simulationApi.run(payload);
+      setResult(res);
+      toast.success("Simulation completed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Simulation failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const overallIcon = result
+    ? result.scenarios.some((s) => s.status === "fail")
+      ? <XCircle className="w-5 h-5 text-destructive mt-0.5" />
+      : result.scenarios.some((s) => s.status === "risky")
+      ? <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
+      : <CheckCircle2 className="w-5 h-5 text-success mt-0.5" />
+    : null;
 
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Policy Simulation</h1>
-          <p className="text-muted-foreground text-sm mt-1">Compare current vs proposed policies</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Configure proposed policy parameters and run a scenario comparison
+          </p>
         </div>
 
-        {/* Policy comparison selector */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div className="glass-elevated rounded-xl p-6 animate-fade-in border-l-4 border-l-sky-medium">
-            <h3 className="font-display font-semibold text-foreground mb-3">Current Policy</h3>
-            <div className="space-y-3">
-              <div className="bg-muted rounded-lg p-4">
-                <p className="text-sm font-medium text-foreground">Interest Rate Policy</p>
-                <p className="text-xs text-muted-foreground mt-1">Annual rate: 5.5% for member loans</p>
-                <p className="text-xs text-muted-foreground">Max loan amount: $50,000</p>
-                <p className="text-xs text-muted-foreground">Repayment period: 5 years</p>
+        {/* Parameter form */}
+        <div className="glass-elevated rounded-xl p-6 animate-fade-in">
+          <h3 className="font-display font-semibold text-foreground mb-4">Proposed Policy Parameters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(Object.keys(fieldLabels) as Array<keyof SimulationPayload>).map((key) => (
+              <div key={key} className="space-y-1.5">
+                <Label htmlFor={key} className="text-xs text-muted-foreground">
+                  {fieldLabels[key]}
+                </Label>
+                <Input
+                  id={key}
+                  type="number"
+                  step="any"
+                  value={payload[key]}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                />
               </div>
-            </div>
+            ))}
           </div>
 
-          <div className="glass-elevated rounded-xl p-6 animate-fade-in border-l-4 border-l-primary">
-            <h3 className="font-display font-semibold text-foreground mb-3">Proposed Policy</h3>
-            <div className="space-y-3">
-              <div className="bg-accent rounded-lg p-4">
-                <p className="text-sm font-medium text-foreground">Interest Rate Adjustment</p>
-                <p className="text-xs text-accent-foreground mt-1">Annual rate: 4.2% for member loans</p>
-                <p className="text-xs text-accent-foreground">Max loan amount: $75,000</p>
-                <p className="text-xs text-accent-foreground">Repayment period: 7 years</p>
-              </div>
-            </div>
+          <div className="flex justify-center mt-6">
+            <Button
+              onClick={handleRun}
+              disabled={loading}
+              className="gradient-primary text-primary-foreground hover:opacity-90 px-8 py-3 text-base"
+              size="lg"
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : (
+                <FlaskConical className="w-5 h-5 mr-2" />
+              )}
+              Run Simulation
+            </Button>
           </div>
         </div>
 
-        <div className="flex justify-center">
-          <Button
-            onClick={() => setSimulated(true)}
-            className="gradient-primary text-primary-foreground hover:opacity-90 px-8 py-3 text-base"
-            size="lg"
-          >
-            <FlaskConical className="w-5 h-5 mr-2" /> Run Simulation
-          </Button>
-        </div>
-
-        {simulated && (
+        {result && (
           <div className="space-y-6 animate-fade-in">
+            {/* Indicators */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="glass-elevated rounded-xl p-5">
+                <p className="text-xs text-muted-foreground">Avg Contribution / Member</p>
+                <p className="text-xl font-display font-bold text-foreground mt-1">
+                  {result.indicators.average_contribution_per_member.toFixed(2)}
+                </p>
+              </div>
+              <div className="glass-elevated rounded-xl p-5">
+                <p className="text-xs text-muted-foreground">Default Rate</p>
+                <p className="text-xl font-display font-bold text-foreground mt-1">
+                  {(result.indicators.default_rate * 100).toFixed(2)}%
+                </p>
+              </div>
+              <div className="glass-elevated rounded-xl p-5">
+                <p className="text-xs text-muted-foreground">Loan Utilization Ratio</p>
+                <p className="text-xl font-display font-bold text-foreground mt-1">
+                  {result.indicators.loan_utilization_ratio.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            {/* Scenarios */}
             <div className="glass-elevated rounded-xl p-6">
-              <h3 className="font-display font-semibold text-foreground mb-4">Simulation Results — Comparison</h3>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={comparisonData} layout="vertical" margin={{ left: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 25% 90%)" />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: "hsl(213 15% 50%)" }} />
-                  <YAxis dataKey="metric" type="category" tick={{ fontSize: 12, fill: "hsl(213 15% 50%)" }} width={130} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="current" fill="hsl(205 85% 85%)" name="Current Policy" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="proposed" fill="hsl(205 85% 50%)" name="Proposed Policy" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <h3 className="font-display font-semibold text-foreground mb-4">Scenario Comparison</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {result.scenarios.map((s) => {
+                  const style = statusStyles[s.status];
+                  return (
+                    <div key={s.field} className={`rounded-lg border p-4 ${style.bg}`}>
+                      <div className="flex items-start gap-3">
+                        <div className={style.text}>{style.icon}</div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-medium text-sm text-foreground">
+                              {fieldLabels[s.field as keyof SimulationPayload] ?? s.field}
+                            </p>
+                            <span className={`text-xs font-semibold uppercase ${style.text}`}>
+                              {style.label}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">{s.message}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {results.map((r) => (
-                <div key={r.label} className="glass-elevated rounded-xl p-5 flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    r.status === "positive" ? "bg-success/10 text-success" :
-                    r.status === "warning" ? "bg-warning/10 text-warning" :
-                    "bg-muted text-muted-foreground"
-                  }`}>
-                    {r.icon}
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{r.label}</p>
-                    <p className="text-lg font-display font-bold text-foreground">{r.value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
+            {/* Summary */}
             <div className="glass-elevated rounded-xl p-6">
               <h3 className="font-display font-semibold text-foreground mb-3">Simulation Summary</h3>
-              <div className="bg-success/5 border border-success/20 rounded-lg p-4">
+              <div className="bg-muted rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5" />
-                  <div>
-                    <p className="font-medium text-foreground text-sm">Recommendation: Approve with modifications</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      The simulation indicates the proposed policy change would result in a <strong>15% improvement</strong> in member satisfaction 
-                      and a <strong>12% increase</strong> in loan uptake. Financial viability remains high with minimal risk. 
-                      Consider a phased implementation over 3 months to monitor real-world impact against simulated projections.
-                    </p>
-                  </div>
+                  {overallIcon}
+                  <p className="text-sm text-foreground">{result.summary}</p>
                 </div>
               </div>
             </div>
