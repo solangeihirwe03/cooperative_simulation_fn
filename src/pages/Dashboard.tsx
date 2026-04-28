@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { Users, FileText, FlaskConical, TrendingUp, ArrowRight, Building, Eye } from "lucide-react";
+import { Users, FileText, Wallet, Banknote, ArrowRight, Building, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
-import { adminApi, type AdminMember } from "@/lib/api";
+import { adminApi, policiesApi, type AdminMember, type Policy, type MemberContributionSummary, type MemberLoan } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,9 @@ const statusVariant: Record<string, string> = {
 const Dashboard = () => {
   const { user } = useAuth();
   const [members, setMembers] = useState<AdminMember[]>([]);
+  const [policies, setPolicies] = useState<Policy[]>([]);
+  const [loans, setLoans] = useState<MemberLoan[]>([]);
+  const [contributions, setContributions] = useState<MemberContributionSummary[]>([]);
   const [selectedMember, setSelectedMember] = useState<AdminMember | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -52,10 +55,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchMembers();
+    policiesApi.getAll().then(setPolicies).catch(() => {});
+    adminApi.getAllLoans().then(setLoans).catch(() => {});
+    adminApi.getAllContributions().then(setContributions).catch(() => {});
   }, [fetchMembers]);
 
   const totalMembers = members.length;
   const cooperativeName = members[0]?.cooperative?.cooperative_name || user?.cooperative?.cooperative_name || "—";
+  const activeMembers = members.filter((m) => m.member_status === "active").length;
+  const activePolicies = policies.filter((p) => p.is_active).length;
+  const activeLoans = loans.filter((l) => ["active", "approved"].includes(l.loan_status)).length;
+  const totalContributions = contributions.reduce((sum, c) => sum + (c.total_contribution || 0), 0);
+  const formatRWF = (n: number) =>
+    new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n);
 
   const handleViewMember = (member: AdminMember) => {
     setSelectedMember(member);
@@ -77,10 +89,30 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard title="Total Members" value={totalMembers.toLocaleString()} icon={<Users className="w-6 h-6" />} trend={{ value: `${members.filter(m => m.member_status === "active").length} active`, positive: true }} />
-        <StatCard title="Active Policies" value="32" icon={<FileText className="w-6 h-6" />} trend={{ value: "3 new", positive: true }} />
-        <StatCard title="Simulations Run" value="156" icon={<FlaskConical className="w-6 h-6" />} trend={{ value: "24 this week", positive: true }} />
-        <StatCard title="Avg. Impact Score" value="78%" icon={<TrendingUp className="w-6 h-6" />} trend={{ value: "5% improvement", positive: true }} />
+        <StatCard
+          title="Total Members"
+          value={totalMembers.toLocaleString()}
+          icon={<Users className="w-6 h-6" />}
+          trend={{ value: `${activeMembers} active`, positive: true }}
+        />
+        <StatCard
+          title="Active Policies"
+          value={activePolicies.toLocaleString()}
+          icon={<FileText className="w-6 h-6" />}
+          trend={{ value: `${policies.length} total`, positive: true }}
+        />
+        <StatCard
+          title="Active Loans"
+          value={activeLoans.toLocaleString()}
+          icon={<Banknote className="w-6 h-6" />}
+          trend={{ value: `${loans.length} total`, positive: true }}
+        />
+        <StatCard
+          title="Total Contributions"
+          value={`${formatRWF(totalContributions)} RWF`}
+          icon={<Wallet className="w-6 h-6" />}
+          trend={{ value: `${contributions.length} contributors`, positive: true }}
+        />
       </div>
 
       {/* Members Table */}
