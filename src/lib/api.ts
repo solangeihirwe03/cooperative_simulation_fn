@@ -242,3 +242,40 @@ export const simulationApi = {
       body: JSON.stringify(data),
     }),
 };
+
+// ─── Policies ────────────────────────────────────────────────
+
+export interface CreatePolicyPayload {
+  policy_name: string;
+  policy_description: string;
+  contribution_amount: number;
+  min_shares: number;
+  max_shares: number;
+  loan_multiplier: number;
+  max_loan_amount: number;
+  interest_rate: number;
+  repayment_period: number;
+  penalty_rate: number;
+}
+
+export interface Policy extends CreatePolicyPayload {
+  policy_id: number;
+  cooperative_id: number;
+  is_active: boolean;
+}
+
+export const policiesApi = {
+  create: (data: CreatePolicyPayload) =>
+    request<Policy>("/policies/create_policy", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  getAll: () => request<Policy[]>("/policies/get_policies"),
+  getOne: (policyId: number) =>
+    request<Policy>(`/policies/policy/${policyId}`),
+  update: (policyId: number, data: Partial<CreatePolicyPayload> & { is_active?: boolean }) =>
+    request<Policy>(`/policies/update_policy/${policyId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+};
