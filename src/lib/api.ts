@@ -124,6 +124,36 @@ export interface MemberContributionSummary {
   total_contribution: number;
 }
 
+export interface SimulationPayload {
+  contribution_amount: number;
+  min_shares: number;
+  max_shares: number;
+  loan_multiplier: number;
+  interest_rate: number;
+  repayment_period: number;
+  penalty_rate: number;
+}
+
+export type ScenarioStatus = "success" | "fail" | "risky";
+
+export interface ScenarioResult {
+  field: string;
+  status: ScenarioStatus;
+  message: string;
+}
+
+export interface SimulationIndicators {
+  average_contribution_per_member: number;
+  default_rate: number;
+  loan_utilization_ratio: number;
+}
+
+export interface SimulationResponse {
+  summary: string;
+  scenarios: ScenarioResult[];
+  indicators: SimulationIndicators;
+}
+
 export const memberApi = {
   getProfile: () => request<MemberProfile>("/members/member_profile"),
 
@@ -173,4 +203,73 @@ export const adminApi = {
     }),
   getAllContributions: () =>
     request<MemberContributionSummary[]>("/member_contribution/members"),
+};
+
+export const simulationApi = {
+  run: (data: SimulationPayload) =>
+    request<SimulationResponse>("/simulation/run", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+export interface LoanPayment {
+  payment_id: number;
+  loan_id: number;
+  member_id: number;
+  amount_paid: number;
+  payment_date: string;
+  recorded_by: number;
+  created_at: string;
+}
+
+export const paymentsApi = {
+  create: (loanId: number, memberId: number, amount_paid: number) =>
+    request<LoanPayment>(`/payments/loan/${loanId}/member/${memberId}`, {
+      method: "POST",
+      body: JSON.stringify({ amount_paid }),
+    }),
+  getAll: () => request<LoanPayment[]>("/payments/"),
+  getOne: (paymentId: number) => request<LoanPayment>(`/payments/${paymentId}`),
+  getByLoan: (loanId: number) => request<LoanPayment[]>(`/payments/loan/${loanId}`),
+  update: (paymentId: number, amount_paid: number) =>
+    request<LoanPayment>(`/payments/${paymentId}`, {
+      method: "PUT",
+      body: JSON.stringify({ amount_paid }),
+    }),
+};
+
+export interface CreatePolicyPayload {
+  policy_name: string;
+  policy_description: string;
+  contribution_amount: number;
+  min_shares: number;
+  max_shares: number;
+  loan_multiplier: number;
+  max_loan_amount: number;
+  interest_rate: number;
+  repayment_period: number;
+  penalty_rate: number;
+}
+
+export interface Policy extends CreatePolicyPayload {
+  policy_id: number;
+  cooperative_id: number;
+  is_active: boolean;
+}
+
+export const policiesApi = {
+  create: (data: CreatePolicyPayload) =>
+    request<Policy>("/policies/create_policy", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  getAll: () => request<Policy[]>("/policies/get_policies"),
+  getOne: (policyId: number) =>
+    request<Policy>(`/policies/policy/${policyId}`),
+  update: (policyId: number, data: Partial<CreatePolicyPayload> & { is_active?: boolean }) =>
+    request<Policy>(`/policies/update_policy/${policyId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
 };
