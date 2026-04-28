@@ -175,6 +175,34 @@ export interface MemberContributionSummary {
   total_contribution: number;
 }
 
+// ─── Payments ────────────────────────────────────────────────
+
+export interface LoanPayment {
+  payment_id: number;
+  loan_id: number;
+  member_id: number;
+  amount_paid: number;
+  payment_date: string;
+  recorded_by: number;
+  created_at: string;
+}
+
+export const paymentsApi = {
+  create: (loanId: number, memberId: number, amount_paid: number) =>
+    request<LoanPayment>(`/payments/loan/${loanId}/member/${memberId}`, {
+      method: "POST",
+      body: JSON.stringify({ amount_paid }),
+    }),
+  getAll: () => request<LoanPayment[]>("/payments/"),
+  getOne: (paymentId: number) => request<LoanPayment>(`/payments/${paymentId}`),
+  getByLoan: (loanId: number) => request<LoanPayment[]>(`/payments/loan/${loanId}`),
+  update: (paymentId: number, amount_paid: number) =>
+    request<LoanPayment>(`/payments/${paymentId}`, {
+      method: "PUT",
+      body: JSON.stringify({ amount_paid }),
+    }),
+};
+
 // ─── Simulation ──────────────────────────────────────────────
 
 export interface SimulationPayload {
