@@ -1,16 +1,24 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, FlaskConical, User, LogOut, Banknote } from "lucide-react";
+import { LayoutDashboard, Users, FileText, FlaskConical, User, LogOut, Banknote,Wallet, Receipt } from "lucide-react";
 
-const navItems = [
+const adminNavItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/loans", label: "Loan Management", icon: Banknote },
+  { to: "/payments", label: "Payments", icon: Receipt },
+  { to: "/contributions", label: "Contributions", icon: Wallet },
   { to: "/policy", label: "Policy Entry", icon: FileText },
   { to: "/simulation", label: "Simulation", icon: FlaskConical },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
+const memberNavItems = [
+  { to: "/profile", label: "My Profile", icon: User },
+];
+
 const AppSidebar = () => {
   const location = useLocation();
+  const role = localStorage.getItem("user_role");
+  const navItems = role === "admin" ? adminNavItems : memberNavItems;
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex flex-col z-50">

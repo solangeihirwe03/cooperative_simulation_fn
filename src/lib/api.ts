@@ -117,6 +117,43 @@ export interface CreateLoanPayload {
   repayment_period: number;
 }
 
+export interface MemberContributionSummary {
+  member_id: number;
+  first_name: string;
+  last_name: string;
+  total_contribution: number;
+}
+
+export interface SimulationPayload {
+  contribution_amount: number;
+  min_shares: number;
+  max_shares: number;
+  loan_multiplier: number;
+  interest_rate: number;
+  repayment_period: number;
+  penalty_rate: number;
+}
+
+export type ScenarioStatus = "success" | "fail" | "risky";
+
+export interface ScenarioResult {
+  field: string;
+  status: ScenarioStatus;
+  message: string;
+}
+
+export interface SimulationIndicators {
+  average_contribution_per_member: number;
+  default_rate: number;
+  loan_utilization_ratio: number;
+}
+
+export interface SimulationResponse {
+  summary: string;
+  scenarios: ScenarioResult[];
+  indicators: SimulationIndicators;
+}
+
 export const memberApi = {
   getProfile: () => request<MemberProfile>("/members/member_profile"),
 
@@ -130,19 +167,109 @@ export const memberApi = {
 };
 
 export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
+export type MemberStatus = "active" | "inactive" | "suspended";
+export type MemberRole = "admin" | "member";
 
 export const adminApi = {
   getMembers: () => request<AdminMember[]>("/admin/members"),
+  getMember: (memberId: number) => request<AdminMember>(`/admin/members/${memberId}`),
+  updateMemberRole: (memberId: number, role: MemberRole) =>
+    request<AdminMember>(`/admin/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    }),
+  updateMemberStatus: (memberId: number, member_status: MemberStatus) =>
+    request<AdminMember>(`/admin/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ member_status }),
+    }),
   createLoan: (memberId: number, data: CreateLoanPayload) =>
-    request<MemberLoan>(`/loans/member/${memberId}`, {
+    request<MemberLoan>(`/loans/members/${memberId}`, {
       method: "POST",
       body: JSON.stringify(data),
     }),
-    updateLoanStatus: (loan_id: number, loanStatus: LoanStatus) =>
-    request<MemberLoan>(`/loans/${loan_id}`, {
+  getAllLoans: () => request<MemberLoan[]>("/loans/members"),
+  getMemberLoans: (memberId: number) =>
+    request<MemberLoan[]>(`/loans/${memberId}`),
+  updateLoanStatus: (loanId: number, loanStatus: LoanStatus) =>
+    request<MemberLoan>(`/loans/${loanId}/status`, {
       method: "PUT",
       body: JSON.stringify({ loan_status: loanStatus }),
     }),
-  getMemberLoans: (member_id: number) =>
-    request<MemberLoan[]>(`/loans/member/${member_id}`),
+  createContribution: (memberId: number, contribution_amount: number) =>
+    request<MemberContribution>(`/admin/members/${memberId}/member_contribution`, {
+      method: "POST",
+      body: JSON.stringify({ contribution_amount }),
+    }),
+  getAllContributions: () =>
+    request<MemberContributionSummary[]>("/member_contribution/members"),
+};
+
+export const simulationApi = {
+  run: (data: SimulationPayload) =>
+    request<SimulationResponse>("/simulation/run", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+export interface LoanPayment {
+  payment_id: number;
+  loan_id: number;
+  member_id: number;
+  amount_paid: number;
+  payment_date: string;
+  recorded_by: number;
+  created_at: string;
+}
+
+export const paymentsApi = {
+  create: (loanId: number, memberId: number, amount_paid: number) =>
+    request<LoanPayment>(`/payments/loan/${loanId}/member/${memberId}`, {
+      method: "POST",
+      body: JSON.stringify({ amount_paid }),
+    }),
+  getAll: () => request<LoanPayment[]>("/payments/"),
+  getOne: (paymentId: number) => request<LoanPayment>(`/payments/${paymentId}`),
+  getByLoan: (loanId: number) => request<LoanPayment[]>(`/payments/loan/${loanId}`),
+  update: (paymentId: number, amount_paid: number) =>
+    request<LoanPayment>(`/payments/${paymentId}`, {
+      method: "PUT",
+      body: JSON.stringify({ amount_paid }),
+    }),
+};
+
+export interface CreatePolicyPayload {
+  policy_name: string;
+  policy_description: string;
+  contribution_amount: number;
+  min_shares: number;
+  max_shares: number;
+  loan_multiplier: number;
+  max_loan_amount: number;
+  interest_rate: number;
+  repayment_period: number;
+  penalty_rate: number;
+}
+
+export interface Policy extends CreatePolicyPayload {
+  policy_id: number;
+  cooperative_id: number;
+  is_active: boolean;
+}
+
+export const policiesApi = {
+  create: (data: CreatePolicyPayload) =>
+    request<Policy>("/policies/create_policy", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  getAll: () => request<Policy[]>("/policies/get_policies"),
+  getOne: (policyId: number) =>
+    request<Policy>(`/policies/policy/${policyId}`),
+  update: (policyId: number, data: Partial<CreatePolicyPayload> & { is_active?: boolean }) =>
+    request<Policy>(`/policies/update_policy/${policyId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
 };
