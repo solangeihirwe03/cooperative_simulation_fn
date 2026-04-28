@@ -11,28 +11,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import MemberDetailDialog from "@/components/dashboard/MemberDetailDialog";
 
-const barData = [
-  { name: "Jan", simulations: 12 },
-  { name: "Feb", simulations: 19 },
-  { name: "Mar", simulations: 27 },
-  { name: "Apr", simulations: 22 },
-  { name: "May", simulations: 34 },
-  { name: "Jun", simulations: 41 },
-];
+const PIE_COLORS: Record<string, string> = {
+  active: "hsl(205 85% 50%)",
+  approved: "hsl(145 65% 45%)",
+  pending: "hsl(38 92% 55%)",
+  rejected: "hsl(0 72% 55%)",
+  completed: "hsl(260 60% 55%)",
+  defaulted: "hsl(15 80% 50%)",
+};
 
-const pieData = [
-  { name: "Approved", value: 45 },
-  { name: "Pending", value: 18 },
-  { name: "Rejected", value: 7 },
-];
+const fallbackColor = "hsl(213 15% 60%)";
 
-const PIE_COLORS = ["hsl(205 85% 50%)", "hsl(38 92% 55%)", "hsl(0 72% 55%)"];
-
-const recentSimulations = [
-  { id: 1, name: "Interest Rate Adjustment", status: "Completed", date: "Mar 22, 2026", impact: "Positive" },
-  { id: 2, name: "Membership Fee Update", status: "Running", date: "Mar 23, 2026", impact: "Neutral" },
-  { id: 3, name: "Loan Policy Revision", status: "Completed", date: "Mar 21, 2026", impact: "Positive" },
-];
+const loanStatusBadge: Record<string, string> = {
+  active: "bg-primary/10 text-primary",
+  approved: "bg-success/10 text-success",
+  pending: "bg-warning/10 text-warning",
+  rejected: "bg-destructive/10 text-destructive",
+  completed: "bg-success/10 text-success",
+  defaulted: "bg-destructive/10 text-destructive",
+};
 
 const statusVariant: Record<string, string> = {
   active: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
@@ -68,6 +65,46 @@ const Dashboard = () => {
   const totalContributions = contributions.reduce((sum, c) => sum + (c.total_contribution || 0), 0);
   const formatRWF = (n: number) =>
     new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n);
+
+  // Loans issued per month (last 6 months)
+  const barData = (() => {
+    const months: { key: string; name: string; loans: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        name: d.toLocaleString("en-US", { month: "short" }),
+        loans: 0,
+      });
+    }
+    loans.forEach((l) => {
+      if (!l.issue_date) return;
+      const d = new Date(l.issue_date);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      const m = months.find((x) => x.key === key);
+      if (m) m.loans += 1;
+    });
+    return months;
+  })();
+
+  // Loan status distribution
+  const pieData = Object.entries(
+    loans.reduce<Record<string, number>>((acc, l) => {
+      const k = (l.loan_status || "unknown").toLowerCase();
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, value]) => ({ name, value }));
+
+  // Recent loans (latest 5 by issue_date)
+  const recentLoans = [...loans]
+    .sort((a, b) => new Date(b.issue_date).getTime() - new Date(a.issue_date).getTime())
+    .slice(0, 5);
+  const memberName = (id: number) => {
+    const m = members.find((x) => x.member_id === id);
+    return m ? `${m.first_name} ${m.last_name}` : `Member #${id}`;
+  };
 
   const handleViewMember = (member: AdminMember) => {
     setSelectedMember(member);
@@ -169,45 +206,53 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 glass-elevated rounded-xl p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4">Simulations Over Time</h3>
+          <h3 className="font-display font-semibold text-foreground mb-4">Loans Issued (Last 6 Months)</h3>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={barData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 25% 90%)" />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: "hsl(213 15% 50%)" }} />
-              <YAxis tick={{ fontSize: 12, fill: "hsl(213 15% 50%)" }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "hsl(213 15% 50%)" }} />
               <Tooltip />
-              <Bar dataKey="simulations" fill="hsl(205 85% 50%)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="loans" fill="hsl(205 85% 50%)" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="glass-elevated rounded-xl p-6">
-          <h3 className="font-display font-semibold text-foreground mb-4">Policy Status</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={4}>
-                {pieData.map((_, i) => (
-                  <Cell key={i} fill={PIE_COLORS[i]} />
+          <h3 className="font-display font-semibold text-foreground mb-4">Loan Status</h3>
+          {pieData.length === 0 ? (
+            <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+              No loans yet
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={4}>
+                    {pieData.map((d) => (
+                      <Cell key={d.name} fill={PIE_COLORS[d.name] || fallbackColor} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-3 mt-2">
+                {pieData.map((d) => (
+                  <div key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground capitalize">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[d.name] || fallbackColor }} />
+                    {d.name} ({d.value})
+                  </div>
                 ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex justify-center gap-4 mt-2">
-            {pieData.map((d, i) => (
-              <div key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
-                {d.name}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="glass-elevated rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold text-foreground">Recent Simulations</h3>
-          <Link to="/simulation" className="text-sm text-primary hover:underline flex items-center gap-1">
+          <h3 className="font-display font-semibold text-foreground">Recent Loans</h3>
+          <Link to="/loans" className="text-sm text-primary hover:underline flex items-center gap-1">
             View all <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -215,31 +260,35 @@ const Dashboard = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="pb-3 font-medium">Simulation</th>
+                <th className="pb-3 font-medium">Member</th>
+                <th className="pb-3 font-medium">Amount</th>
                 <th className="pb-3 font-medium">Status</th>
-                <th className="pb-3 font-medium">Date</th>
-                <th className="pb-3 font-medium">Impact</th>
+                <th className="pb-3 font-medium">Issued</th>
+                <th className="pb-3 font-medium">Balance</th>
               </tr>
             </thead>
             <tbody>
-              {recentSimulations.map((sim) => (
-                <tr key={sim.id} className="border-b border-border/50 last:border-0">
-                  <td className="py-3 font-medium text-foreground">{sim.name}</td>
-                  <td className="py-3">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      sim.status === "Completed" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
-                    }`}>
-                      {sim.status}
-                    </span>
-                  </td>
-                  <td className="py-3 text-muted-foreground">{sim.date}</td>
-                  <td className="py-3">
-                    <span className={`text-xs font-medium ${sim.impact === "Positive" ? "text-success" : "text-muted-foreground"}`}>
-                      {sim.impact}
-                    </span>
-                  </td>
+              {recentLoans.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-muted-foreground">No loans yet</td>
                 </tr>
-              ))}
+              ) : (
+                recentLoans.map((l) => (
+                  <tr key={l.loan_id} className="border-b border-border/50 last:border-0">
+                    <td className="py-3 font-medium text-foreground">{memberName(l.member_id)}</td>
+                    <td className="py-3 text-foreground">{formatRWF(l.loan_amount)} RWF</td>
+                    <td className="py-3">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        loanStatusBadge[l.loan_status?.toLowerCase()] || "bg-muted text-muted-foreground"
+                      }`}>
+                        {l.loan_status}
+                      </span>
+                    </td>
+                    <td className="py-3 text-muted-foreground">{new Date(l.issue_date).toLocaleDateString()}</td>
+                    <td className="py-3 text-muted-foreground">{formatRWF(l.loan_balance)} RWF</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
