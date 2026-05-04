@@ -167,11 +167,6 @@ export const adminApi = {
       method: "PUT",
       body: JSON.stringify({ member_status }),
     }),
-  createLoan: (memberId: number, data: CreateLoanPayload) =>
-    request<MemberLoan>(`/loans/members/${memberId}`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
   requestLoan: (data: CreateLoanPayload) =>
     request<MemberLoan>("/loans/request_loan", {
       method: "POST",
