@@ -12,6 +12,7 @@ import PolicyForm from "./pages/PolicyForm.tsx";
 import Simulation from "./pages/Simulation.tsx";
 import Profile from "./pages/Profile.tsx";
 import Loans from "./pages/Loans.tsx";
+import RequestLoan from "./pages/RequestLoan.tsx";
 import Contributions from "./pages/Contributions.tsx";
 import Payments from "./pages/Payments.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/simulation" element={<ProtectedRoute adminOnly><Simulation /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/loans" element={<ProtectedRoute adminOnly><Loans /></ProtectedRoute>} />
+            <Route path="/request-loan" element={<ProtectedRoute><RequestLoan /></ProtectedRoute>} />
             <Route path="/contributions" element={<ProtectedRoute adminOnly><Contributions /></ProtectedRoute>} />
             <Route path="/payments" element={<ProtectedRoute adminOnly><Payments /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

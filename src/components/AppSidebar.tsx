@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt } from "lucide-react";
+import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt, HandCoins } from "lucide-react";
 
 const adminNavItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/loans", label: "Loan Management", icon: Banknote },
+  { to: "/request-loan", label: "Request Loan", icon: HandCoins },
   { to: "/payments", label: "Payments", icon: Receipt },
   { to: "/contributions", label: "Contributions", icon: Wallet },
   { to: "/policy", label: "Policy Entry", icon: FileText },
@@ -12,6 +13,7 @@ const adminNavItems = [
 ];
 
 const memberNavItems = [
+  { to: "/request-loan", label: "Request Loan", icon: HandCoins },
   { to: "/profile", label: "My Profile", icon: User },
 ];
 
