@@ -12,7 +12,23 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(error.detail || `Error ${res.status}`);
+    let message: string;
+    const detail = error?.detail;
+    if (typeof detail === "string") {
+      message = detail;
+    } else if (Array.isArray(detail)) {
+      // FastAPI validation errors: [{loc, msg, type}, ...]
+      message = detail
+        .map((d: any) => (typeof d === "string" ? d : d?.msg || JSON.stringify(d)))
+        .join("; ");
+    } else if (detail && typeof detail === "object") {
+      message = detail.msg || JSON.stringify(detail);
+    } else if (typeof error?.message === "string") {
+      message = error.message;
+    } else {
+      message = `Error ${res.status}`;
+    }
+    throw new Error(message);
   }
 
   return res.json();
@@ -127,6 +143,11 @@ export const memberApi = {
     }),
   getContributions: () => request<MemberContribution[]>("/members/my_contributions"),
   getLoans: () => request<MemberLoan[]>("/loans/me"),
+  requestLoan: (data: CreateLoanPayload) =>
+    request<MemberLoan>("/loans/request_loan", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
@@ -148,6 +169,11 @@ export const adminApi = {
     }),
   createLoan: (memberId: number, data: CreateLoanPayload) =>
     request<MemberLoan>(`/loans/members/${memberId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  requestLoan: (data: CreateLoanPayload) =>
+    request<MemberLoan>("/loans/request_loan", {
       method: "POST",
       body: JSON.stringify(data),
     }),

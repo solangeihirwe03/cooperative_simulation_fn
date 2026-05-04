@@ -6,6 +6,8 @@ import { Plus, DollarSign, Percent, Calendar, FileText, Eye, ArrowLeft } from "l
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import MemberList from "@/components/loans/MemberList";
 
 const LOAN_STATUSES: LoanStatus[] = ["pending", "approved", "active", "completed", "cancelled"];
@@ -34,6 +36,7 @@ const Loans = () => {
     repayment_period: 0,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const fetchLoans = () => {
     setLoansLoading(true);
@@ -75,13 +78,16 @@ const Loans = () => {
     e.preventDefault();
     if (!selectedMember) return;
     setSubmitting(true);
+    setCreateError(null);
     try {
       await adminApi.createLoan(selectedMember.member_id, formData);
       toast.success(`Loan created for ${selectedMember.first_name} ${selectedMember.last_name}`);
       setFormData({ loan_amount: 0, interest_rate: 0, repayment_period: 0 });
       fetchLoans();
     } catch (err: any) {
-      toast.error(err.message || "Failed to create loan");
+      const msg = err?.message || "Failed to create loan";
+      setCreateError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -240,6 +246,13 @@ const Loans = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleCreateLoan} className="space-y-6">
+                      {createError && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="w-4 h-4" />
+                          <AlertTitle>Cannot create loan</AlertTitle>
+                          <AlertDescription>{createError}</AlertDescription>
+                        </Alert>
+                      )}
                       <div className="flex items-center gap-3 pb-4 border-b border-border">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                           {selectedMember.first_name[0]}
