@@ -1,5 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt, HandCoins } from "lucide-react";
+import { authApi } from "@/lib/api";
 
 const adminNavItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -19,8 +20,15 @@ const memberNavItems = [
 
 const AppSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const role = localStorage.getItem("user_role");
   const navItems = role === "admin" ? adminNavItems : memberNavItems;
+
+  const handleSignOut = (e: React.MouseEvent) => {
+    e.preventDefault();
+    authApi.logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex flex-col z-50">
@@ -50,13 +58,13 @@ const AppSidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-border">
-        <Link
-          to="/login"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
         >
           <LogOut className="w-5 h-5" />
           Sign Out
-        </Link>
+        </button>
       </div>
     </aside>
   );
