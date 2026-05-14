@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { Wallet, Users, Plus, Search } from "lucide-react";
+import { Wallet, Users, Plus, Search, AlertTriangle } from "lucide-react";
 import { adminApi, type MemberContributionSummary, type AdminMember } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,11 @@ const Contributions = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [penaltyOpen, setPenaltyOpen] = useState(false);
+  const [penaltyMember, setPenaltyMember] = useState<MemberContributionSummary | null>(null);
+  const [penaltyAmount, setPenaltyAmount] = useState("200");
+  const [penaltyReason, setPenaltyReason] = useState("");
+  const [penaltySubmitting, setPenaltySubmitting] = useState(false);
 
   const load = useCallback(() => {
     adminApi.getAllContributions().then(setSummaries).catch(() =>
@@ -58,6 +63,35 @@ const Contributions = () => {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openPenalty = (m: MemberContributionSummary) => {
+    setPenaltyMember(m);
+    setPenaltyAmount("200");
+    setPenaltyReason("");
+    setPenaltyOpen(true);
+  };
+
+  const handlePenalty = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!penaltyMember || !penaltyAmount || !penaltyReason) return;
+    setPenaltySubmitting(true);
+    try {
+      await adminApi.createPenalty(penaltyMember.member_id, {
+        amount: Number(penaltyAmount),
+        reason: penaltyReason,
+      });
+      toast({ title: "Penalty issued" });
+      setPenaltyOpen(false);
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to issue penalty",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setPenaltySubmitting(false);
     }
   };
 
@@ -99,12 +133,13 @@ const Contributions = () => {
                 <TableHead>Member ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead className="text-right">Total Contribution</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                     No contributions found
                   </TableCell>
                 </TableRow>
@@ -115,6 +150,20 @@ const Contributions = () => {
                     <TableCell>{s.first_name} {s.last_name}</TableCell>
                     <TableCell className="text-right font-medium text-primary">
                       {fmt(s.total_contribution)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {s.total_contribution <= 0 ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openPenalty(s)}
+                          className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                        >
+                          <AlertTriangle className="w-4 h-4 mr-1" /> Penalize
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -159,6 +208,52 @@ const Contributions = () => {
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={submitting || !selectedMemberId || !amount} className="gradient-primary text-primary-foreground">
                 {submitting ? "Saving…" : "Record"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={penaltyOpen} onOpenChange={setPenaltyOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Issue Penalty</DialogTitle>
+            <DialogDescription>
+              {penaltyMember
+                ? `Penalize ${penaltyMember.first_name} ${penaltyMember.last_name} for missing contribution.`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePenalty} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount (RWF)</label>
+              <Input
+                type="number"
+                min="1"
+                value={penaltyAmount}
+                onChange={(e) => setPenaltyAmount(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Reason</label>
+              <Input
+                placeholder="e.g. kudatanga ubwizigame"
+                value={penaltyReason}
+                onChange={(e) => setPenaltyReason(e.target.value)}
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setPenaltyOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={penaltySubmitting || !penaltyAmount || !penaltyReason}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {penaltySubmitting ? "Issuing…" : "Issue Penalty"}
               </Button>
             </DialogFooter>
           </form>
