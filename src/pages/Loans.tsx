@@ -73,6 +73,7 @@ const Loans = () => {
     active: allLoans.filter((l) => l.loan_status === "active").length,
     pending: allLoans.filter((l) => l.loan_status === "pending").length,
     totalAmount: allLoans.reduce((sum, l) => sum + l.loan_amount, 0),
+    totalUnpaid: allLoans.reduce((sum, l) => sum + (l.loan_balance || 0), 0),
   };
 
   return (
@@ -84,12 +85,13 @@ const Loans = () => {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           {[
             { label: "Total Loans", value: loanStats.total, color: "text-foreground" },
             { label: "Active", value: loanStats.active, color: "text-emerald-600" },
             { label: "Pending", value: loanStats.pending, color: "text-yellow-600" },
             { label: "Total Disbursed", value: `${loanStats.totalAmount.toLocaleString()} RWF`, color: "text-primary" },
+            { label: "Total Unpaid", value: `${loanStats.totalUnpaid.toLocaleString()} RWF`, color: "text-destructive" },
           ].map((s) => (
             <div key={s.label} className="glass-elevated rounded-xl p-4">
               <p className="text-xs text-muted-foreground">{s.label}</p>
