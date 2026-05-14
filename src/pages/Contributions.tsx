@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 const fmt = (n: number) =>
   n.toLocaleString("en-RW", { style: "currency", currency: "RWF", maximumFractionDigits: 0 });
@@ -43,6 +44,12 @@ const Contributions = () => {
 
   const total = summaries.reduce((s, c) => s + c.total_contribution, 0);
   const contributors = summaries.filter((s) => s.total_contribution > 0).length;
+  const nonContributors = summaries.length - contributors;
+  const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
+  const chartData = [
+    { name: "Contributing", value: contributors, color: "hsl(var(--primary))" },
+    { name: "Not Contributing", value: nonContributors, color: "hsl(var(--destructive))" },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +119,46 @@ const Contributions = () => {
           <StatCard title="Total Contributions" value={fmt(total)} icon={<Wallet className="w-6 h-6" />} />
           <StatCard title="Contributing Members" value={contributors.toString()} icon={<Users className="w-6 h-6" />} />
           <StatCard title="Total Members" value={summaries.length.toString()} icon={<Users className="w-6 h-6" />} />
+        </div>
+
+        <div className="glass-elevated rounded-xl p-6">
+          <div className="mb-4">
+            <h3 className="font-display font-semibold text-foreground">Contribution Status — {monthLabel}</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {contributors} of {summaries.length} members have contributed this month
+            </p>
+          </div>
+          {summaries.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8 text-sm">No data available</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={3}
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
+                  {chartData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "0.5rem",
+                  }}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div className="glass-elevated rounded-xl p-6">
