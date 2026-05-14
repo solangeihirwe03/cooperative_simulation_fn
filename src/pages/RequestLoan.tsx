@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { memberApi, type CreateLoanPayload, type MemberLoan } from "@/lib/api";
+import {
+  memberApi,
+  policiesApi,
+  type CreateLoanPayload,
+  type MemberLoan,
+  type Policy,
+} from "@/lib/api";
 import { toast } from "sonner";
-import { DollarSign, Percent, Calendar, Send, AlertCircle, FileText } from "lucide-react";
+import { DollarSign, Percent, Calendar, Send, AlertCircle, FileText, Wallet } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const RequestLoan = () => {
@@ -16,6 +22,8 @@ const RequestLoan = () => {
   const [successLoan, setSuccessLoan] = useState<MemberLoan | null>(null);
   const [myLoans, setMyLoans] = useState<MemberLoan[]>([]);
   const [loadingLoans, setLoadingLoans] = useState(true);
+  const [policy, setPolicy] = useState<Policy | null>(null);
+  const [totalContribution, setTotalContribution] = useState(0);
 
   const loadLoans = () => {
     setLoadingLoans(true);
@@ -30,7 +38,30 @@ const RequestLoan = () => {
 
   useEffect(() => {
     loadLoans();
+    policiesApi
+      .getAll()
+      .then((all) => {
+        const active = all.find((p) => p.is_active) || all[0] || null;
+        if (active) {
+          setPolicy(active);
+          setFormData((prev) => ({
+            ...prev,
+            interest_rate: active.interest_rate,
+            repayment_period: active.repayment_period,
+          }));
+        }
+      })
+      .catch(() => {});
+    memberApi
+      .getContributions()
+      .then((cs) =>
+        setTotalContribution(cs.reduce((s, c) => s + (c.contribution_amount || 0), 0)),
+      )
+      .catch(() => {});
   }, []);
+
+  const maxLoan = policy ? totalContribution * policy.loan_multiplier : 0;
+  const exceedsMax = policy != null && formData.loan_amount > maxLoan;
 
   const interestPayable =
     (formData.loan_amount * formData.interest_rate * formData.repayment_period) / (12 * 100);
@@ -85,6 +116,24 @@ const RequestLoan = () => {
           </Alert>
         )}
 
+        {policy && (
+          <Alert>
+            <Wallet className="w-4 h-4" />
+            <AlertTitle>Loan eligibility</AlertTitle>
+            <AlertDescription>
+              Your total contribution is{" "}
+              <span className="font-semibold">{totalContribution.toLocaleString()} RWF</span>. Based
+              on the active policy multiplier of{" "}
+              <span className="font-semibold">×{policy.loan_multiplier}</span>, the maximum loan you
+              can request is{" "}
+              <span className="font-semibold text-primary">
+                {maxLoan.toLocaleString()} RWF
+              </span>
+              .
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="glass-elevated rounded-xl p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -96,12 +145,18 @@ const RequestLoan = () => {
                 <input
                   type="number"
                   min={0}
+                  max={policy ? maxLoan : undefined}
                   value={formData.loan_amount || ""}
                   onChange={(e) => setFormData({ ...formData, loan_amount: +e.target.value })}
                   required
                   className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                   placeholder="e.g. 5000"
                 />
+                {exceedsMax && (
+                  <p className="text-xs text-destructive mt-1">
+                    Exceeds maximum allowed ({maxLoan.toLocaleString()} RWF)
+                  </p>
+                )}
               </div>
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-2">
@@ -163,7 +218,7 @@ const RequestLoan = () => {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || exceedsMax}
               className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" />
