@@ -12,7 +12,23 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(error.detail || `Error ${res.status}`);
+    let message: string;
+    const detail = error?.detail;
+    if (typeof detail === "string") {
+      message = detail;
+    } else if (Array.isArray(detail)) {
+      // FastAPI validation errors: [{loc, msg, type}, ...]
+      message = detail
+        .map((d: any) => (typeof d === "string" ? d : d?.msg || JSON.stringify(d)))
+        .join("; ");
+    } else if (detail && typeof detail === "object") {
+      message = detail.msg || JSON.stringify(detail);
+    } else if (typeof error?.message === "string") {
+      message = error.message;
+    } else {
+      message = `Error ${res.status}`;
+    }
+    throw new Error(message);
   }
 
   return res.json();
@@ -55,6 +71,7 @@ export const authApi = {
 
   logout: () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_role");
   },
 };
 
@@ -124,6 +141,15 @@ export interface MemberContributionSummary {
   total_contribution: number;
 }
 
+export interface Penalty {
+  penalty_id: number;
+  member_id: number;
+  amount: number;
+  reason: string;
+  status: string;
+  date_issued: string;
+}
+
 export interface SimulationPayload {
   contribution_amount: number;
   min_shares: number;
@@ -179,18 +205,18 @@ export const adminApi = {
       body: JSON.stringify({ role }),
     }),
   updateMemberStatus: (memberId: number, member_status: MemberStatus) =>
-    request<AdminMember>(`/admin/members/${memberId}`, {
+    request<AdminMember>(`/admin/members/${memberId}/member_status`, {
       method: "PUT",
       body: JSON.stringify({ member_status }),
     }),
-  createLoan: (memberId: number, data: CreateLoanPayload) =>
-    request<MemberLoan>(`/loans/members/${memberId}`, {
+  requestLoan: (data: CreateLoanPayload) =>
+    request<MemberLoan>("/loans/request_loan", {
       method: "POST",
       body: JSON.stringify(data),
     }),
   getAllLoans: () => request<MemberLoan[]>("/loans/members"),
   getMemberLoans: (memberId: number) =>
-    request<MemberLoan[]>(`/loans/${memberId}`),
+    request<MemberLoan[]>(`/loans/member/${memberId}`),
   updateLoanStatus: (loanId: number, loanStatus: LoanStatus) =>
     request<MemberLoan>(`/loans/${loanId}/status`, {
       method: "PUT",
@@ -203,6 +229,11 @@ export const adminApi = {
     }),
   getAllContributions: () =>
     request<MemberContributionSummary[]>("/member_contribution/members"),
+  createPenalty: (memberId: number, data: { amount: number; reason: string }) =>
+    request<Penalty>(`/admin/members/${memberId}/create_penalty`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 export const simulationApi = {

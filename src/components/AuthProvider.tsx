@@ -17,6 +17,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(() => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_role");
     setToken(null);
     setUser(null);
   }, []);

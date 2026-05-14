@@ -31,7 +31,10 @@ const Profile = () => {
 
   useEffect(() => {
     Promise.all([
-      memberApi.getProfile().then(setProfile),
+      memberApi.getProfile().then((data) => {
+        setProfile(data);
+        setOriginalProfile(data);
+      }),
       memberApi.getContributions().then(setContributions),
       memberApi.getLoans().then(setLoans),
     ])
@@ -59,9 +62,8 @@ const Profile = () => {
       if (profile.phone_number !== originalProfile.phone_number)
         updateData.phone_number = profile.phone_number;
       const updated = await memberApi.updateProfile(updateData);
-      console.log("Update response:", updated);
       setProfile(updated);
-      console.log("Profile updated successfully:", profile);
+      toast({ title: "Profile updated", description: "Your profile has been updated successfully." });
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast({ title: "Update failed", description: err.message });

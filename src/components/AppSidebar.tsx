@@ -1,9 +1,12 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, FlaskConical, User, LogOut, Banknote,Wallet, Receipt } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt, HandCoins } from "lucide-react";
+import { authApi } from "@/lib/api";
+import { Button } from "react-day-picker";
 
 const adminNavItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/loans", label: "Loan Management", icon: Banknote },
+  { to: "/request-loan", label: "Request Loan", icon: HandCoins },
   { to: "/payments", label: "Payments", icon: Receipt },
   { to: "/contributions", label: "Contributions", icon: Wallet },
   { to: "/policy", label: "Policy Entry", icon: FileText },
@@ -12,13 +15,21 @@ const adminNavItems = [
 ];
 
 const memberNavItems = [
+  { to: "/request-loan", label: "Request Loan", icon: HandCoins },
   { to: "/profile", label: "My Profile", icon: User },
 ];
 
 const AppSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const role = localStorage.getItem("user_role");
   const navItems = role === "admin" ? adminNavItems : memberNavItems;
+
+  const handleLogout = (e:React.MouseEvent) => {
+    e.preventDefault();
+    authApi.logout();
+    navigate("/", { replace: true });
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex flex-col z-50">
@@ -48,13 +59,13 @@ const AppSidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-border">
-        <Link
-          to="/login"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+        <button
+           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+            onClick={handleLogout}
         >
           <LogOut className="w-5 h-5" />
           Sign Out
-        </Link>
+        </button>
       </div>
     </aside>
   );
