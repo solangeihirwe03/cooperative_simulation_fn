@@ -71,6 +71,7 @@ export const authApi = {
 
   logout: () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_role");
   },
 };
 
@@ -187,6 +188,11 @@ export const adminApi = {
     }),
   getAllContributions: () =>
     request<MemberContributionSummary[]>("/member_contribution/members"),
+  createPenalty: (memberId: number, data: { amount: number; reason: string }) =>
+    request<Penalty>(`/admin/members/${memberId}/create_penalty`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 export interface MemberContributionSummary {
@@ -194,6 +200,15 @@ export interface MemberContributionSummary {
   first_name: string;
   last_name: string;
   total_contribution: number;
+}
+
+export interface Penalty {
+  penalty_id: number;
+  member_id: number;
+  amount: number;
+  reason: string;
+  status: string;
+  date_issued: string;
 }
 
 // ─── Payments ────────────────────────────────────────────────
