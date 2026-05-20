@@ -291,6 +291,68 @@ const Profile = () => {
                   </div>
                 </div>
               </TabsContent>
+
+              {/* Penalties Tab */}
+              <TabsContent value="penalties">
+                <div className="glass-elevated rounded-xl p-6 animate-fade-in">
+                  <h2 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-destructive" /> My Penalties
+                  </h2>
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead>ID</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="text-right">Paid</TableHead>
+                          <TableHead className="text-right">Balance</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {penalties.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                              No penalties
+                            </TableCell>
+                          </TableRow>
+                        ) : penalties.map((p) => {
+                          const paid = p.amount_paid ?? 0;
+                          const balance = p.amount - paid;
+                          const isPaid = p.status === "paid" || balance <= 0;
+                          return (
+                            <TableRow key={p.penalty_id}>
+                              <TableCell className="font-medium">P-{p.penalty_id}</TableCell>
+                              <TableCell>{p.reason}</TableCell>
+                              <TableCell className="text-right">{fmt(p.amount)}</TableCell>
+                              <TableCell className="text-right">{fmt(paid)}</TableCell>
+                              <TableCell className="text-right font-medium">{fmt(balance)}</TableCell>
+                              <TableCell>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isPaid ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                                  {p.status}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">{new Date(p.date_issued).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-right">
+                                {!isPaid ? (
+                                  <Button size="sm" onClick={() => openPay(p)} className="gradient-primary text-primary-foreground">
+                                    Pay
+                                  </Button>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
           </>
         )}
