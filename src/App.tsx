@@ -15,6 +15,7 @@ import Loans from "./pages/Loans.tsx";
 import RequestLoan from "./pages/RequestLoan.tsx";
 import Contributions from "./pages/Contributions.tsx";
 import Payments from "./pages/Payments.tsx";
+import Penalties from "./pages/Penalties.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/request-loan" element={<ProtectedRoute><RequestLoan /></ProtectedRoute>} />
             <Route path="/contributions" element={<ProtectedRoute adminOnly><Contributions /></ProtectedRoute>} />
             <Route path="/payments" element={<ProtectedRoute adminOnly><Payments /></ProtectedRoute>} />
+            <Route path="/penalties" element={<ProtectedRoute adminOnly><Penalties /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
