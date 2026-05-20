@@ -6,12 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   User, Mail, Phone, Shield, Save, Calendar,
-  Wallet, TrendingUp, CreditCard, Clock, CheckCircle2, AlertCircle, XCircle, DollarSign
+  Wallet, TrendingUp, CreditCard, Clock, CheckCircle2, AlertCircle, XCircle, DollarSign, AlertTriangle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { memberApi, type MemberProfile as ProfileType, type MemberContribution as ContributionType,MemberLoan } from "@/lib/api";
+import { memberApi, penaltiesApi, type MemberProfile as ProfileType, type MemberContribution as ContributionType, MemberLoan, type Penalty } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import StatCard from "@/components/StatCard";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   active: { color: "bg-primary/10 text-primary", icon: <CheckCircle2 className="w-3 h-3" /> },
@@ -26,14 +27,20 @@ const Profile = () => {
   const [originalProfile, setOriginalProfile] = useState<ProfileType | null>(null)
   const [contributions, setContributions] = useState<ContributionType[]>([]);
   const [loans, setLoans] = useState<MemberLoan[]>([]);
+  const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [payTarget, setPayTarget] = useState<Penalty | null>(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     Promise.all([
       memberApi.getProfile().then(setProfile),
       memberApi.getContributions().then(setContributions),
       memberApi.getLoans().then(setLoans),
+      memberApi.getMyPenalties().then(setPenalties).catch(() => setPenalties([])),
     ])
       .catch(() => toast({ title: "Failed to load profile", variant: "destructive" }))
       .finally(() => setLoading(false));
@@ -70,6 +77,36 @@ const Profile = () => {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const reloadPenalties = () =>
+    memberApi.getMyPenalties().then(setPenalties).catch(() => {});
+
+  const openPay = (p: Penalty) => {
+    setPayTarget(p);
+    const balance = p.amount - (p.amount_paid ?? 0);
+    setPayAmount(balance > 0 ? balance.toString() : "");
+    setPayOpen(true);
+  };
+
+  const handlePay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payTarget || !payAmount) return;
+    setPaying(true);
+    try {
+      await penaltiesApi.pay(payTarget.penalty_id, Number(payAmount));
+      toast({ title: "Penalty payment recorded" });
+      setPayOpen(false);
+      reloadPenalties();
+    } catch (err: unknown) {
+      toast({
+        title: "Payment failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -126,6 +163,7 @@ const Profile = () => {
                 <TabsTrigger value="profile">Profile Details</TabsTrigger>
                 <TabsTrigger value="loans">Loan History</TabsTrigger>
                 <TabsTrigger value="contributions">Contributions</TabsTrigger>
+                <TabsTrigger value="penalties">Penalties</TabsTrigger>
               </TabsList>
 
               {/* Profile Tab */}
@@ -253,10 +291,101 @@ const Profile = () => {
                   </div>
                 </div>
               </TabsContent>
+
+              {/* Penalties Tab */}
+              <TabsContent value="penalties">
+                <div className="glass-elevated rounded-xl p-6 animate-fade-in">
+                  <h2 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-destructive" /> My Penalties
+                  </h2>
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead>ID</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="text-right">Paid</TableHead>
+                          <TableHead className="text-right">Balance</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {penalties.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                              No penalties
+                            </TableCell>
+                          </TableRow>
+                        ) : penalties.map((p) => {
+                          const paid = p.amount_paid ?? 0;
+                          const balance = p.amount - paid;
+                          const isPaid = p.status === "paid" || balance <= 0;
+                          return (
+                            <TableRow key={p.penalty_id}>
+                              <TableCell className="font-medium">P-{p.penalty_id}</TableCell>
+                              <TableCell>{p.reason}</TableCell>
+                              <TableCell className="text-right">{fmt(p.amount)}</TableCell>
+                              <TableCell className="text-right">{fmt(paid)}</TableCell>
+                              <TableCell className="text-right font-medium">{fmt(balance)}</TableCell>
+                              <TableCell>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isPaid ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                                  {p.status}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">{new Date(p.date_issued).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-right">
+                                {!isPaid ? (
+                                  <Button size="sm" onClick={() => openPay(p)} className="gradient-primary text-primary-foreground">
+                                    Pay
+                                  </Button>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
           </>
         )}
       </div>
+
+      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pay Penalty</DialogTitle>
+            <DialogDescription>
+              {payTarget ? `Penalty P-${payTarget.penalty_id} • Balance ${fmt(payTarget.amount - (payTarget.amount_paid ?? 0))}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePay} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount (RWF)</label>
+              <Input
+                type="number"
+                min="1"
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setPayOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={paying || !payAmount} className="gradient-primary text-primary-foreground">
+                {paying ? "Paying…" : "Pay"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
