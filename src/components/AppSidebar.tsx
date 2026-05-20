@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt, HandCoins } from "lucide-react";
+import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt, HandCoins, AlertTriangle } from "lucide-react";
 import { authApi } from "@/lib/api";
 
 const adminNavItems = [
@@ -8,6 +8,7 @@ const adminNavItems = [
   { to: "/request-loan", label: "Request Loan", icon: HandCoins },
   { to: "/payments", label: "Payments", icon: Receipt },
   { to: "/contributions", label: "Contributions", icon: Wallet },
+  { to: "/penalties", label: "Penalties", icon: AlertTriangle },
   { to: "/policy", label: "Policy Entry", icon: FileText },
   { to: "/simulation", label: "Simulation", icon: FlaskConical },
   { to: "/profile", label: "Profile", icon: User },
