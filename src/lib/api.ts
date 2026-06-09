@@ -145,10 +145,19 @@ export interface Penalty {
   penalty_id: number;
   member_id: number;
   amount: number;
+  amount_paid?: number;
   reason: string;
   status: string;
   date_issued: string;
 }
+
+export const penaltiesApi = {
+  pay: (penaltyId: number, amount: number) =>
+    request<Penalty>(`/penalties/${penaltyId}/pay`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
+};
 
 export interface SimulationPayload {
   contribution_amount: number;
@@ -190,6 +199,7 @@ export const memberApi = {
     }),
   getContributions: () => request<MemberContribution[]>("/members/my_contributions"),
   getLoans: () => request<MemberLoan[]>("/loans/me"),
+  getMyPenalties: () => request<Penalty[]>("/members/my_penalties"),
 };
 
 export type LoanStatus = "pending" | "approved" | "active" | "completed" | "cancelled";
@@ -234,6 +244,9 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  getAllPenalties: () => request<Penalty[]>("/admin/penalties"),
+  getMemberPenalties: (memberId: number) =>
+    request<Penalty[]>(`/admin/members/${memberId}/penalties`),
 };
 
 export const simulationApi = {
