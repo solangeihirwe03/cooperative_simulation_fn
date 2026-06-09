@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { Users, FileText, Wallet, Banknote, ArrowRight, Building, Eye } from "lucide-react";
+import { Users, FileText, Wallet, Banknote, ArrowRight, Building, Eye, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
-import { adminApi, policiesApi, type AdminMember, type Policy, type MemberContributionSummary, type MemberLoan } from "@/lib/api";
+import { adminApi, policiesApi, type AdminMember, type Policy, type MemberContributionSummary, type MemberLoan, type Penalty } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ const Dashboard = () => {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loans, setLoans] = useState<MemberLoan[]>([]);
   const [contributions, setContributions] = useState<MemberContributionSummary[]>([]);
+  const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [selectedMember, setSelectedMember] = useState<AdminMember | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -55,6 +56,7 @@ const Dashboard = () => {
     policiesApi.getAll().then(setPolicies).catch(() => {});
     adminApi.getAllLoans().then(setLoans).catch(() => {});
     adminApi.getAllContributions().then(setContributions).catch(() => {});
+    adminApi.getAllPenalties().then(setPenalties).catch(() => {});
   }, [fetchMembers]);
 
   const totalMembers = members.length;
@@ -63,6 +65,11 @@ const Dashboard = () => {
   const activePolicies = policies.filter((p) => p.is_active).length;
   const activeLoans = loans.filter((l) => ["active", "approved"].includes(l.loan_status)).length;
   const totalContributions = contributions.reduce((sum, c) => sum + (c.total_contribution || 0), 0);
+  const loanIncome = loans
+    .filter((l) => l.loan_status === "active" || l.loan_status === "completed")
+    .reduce((sum, l) => sum + (l.repayment_amount || 0), 0);
+  const penaltyIncome = penalties.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalIncome = loanIncome + penaltyIncome;
   const formatRWF = (n: number) =>
     new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n);
 
@@ -149,6 +156,12 @@ const Dashboard = () => {
           value={`${formatRWF(totalContributions)} RWF`}
           icon={<Wallet className="w-6 h-6" />}
           trend={{ value: `${contributions.length} contributors`, positive: true }}
+        />
+        <StatCard
+          title="Total Income"
+          value={`${formatRWF(totalIncome)} RWF`}
+          icon={<TrendingUp className="w-6 h-6" />}
+          trend={{ value: "Loans + Penalties", positive: true }}
         />
       </div>
 
