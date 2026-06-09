@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { adminApi, type AdminMember, type MemberLoan, type LoanStatus } from "@/lib/api";
 import { toast } from "sonner";
-import { FileText } from "lucide-react";
+import { FileText, Eye } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const LOAN_STATUSES: LoanStatus[] = ["pending", "approved", "active", "completed", "cancelled"];
 
