@@ -65,6 +65,19 @@ const Loans = () => {
     }
   };
 
+  const handleViewLoan = async (loanId: number) => {
+    setDetailOpen(true);
+    setDetailLoading(true);
+    try {
+      const loan = await adminApi.getLoan(loanId);
+      setDetailLoan(loan);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load loan details");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   const filteredLoans = allLoans.filter((loan) => {
     const matchesStatus = statusFilter === "all" || loan.loan_status === statusFilter;
     const name = getMemberName(loan.member_id).toLowerCase();
