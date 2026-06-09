@@ -65,6 +65,11 @@ const Dashboard = () => {
   const activePolicies = policies.filter((p) => p.is_active).length;
   const activeLoans = loans.filter((l) => ["active", "approved"].includes(l.loan_status)).length;
   const totalContributions = contributions.reduce((sum, c) => sum + (c.total_contribution || 0), 0);
+  const loanIncome = loans
+    .filter((l) => l.loan_status === "active" || l.loan_status === "completed")
+    .reduce((sum, l) => sum + (l.repayment_amount || 0), 0);
+  const penaltyIncome = penalties.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalIncome = loanIncome + penaltyIncome;
   const formatRWF = (n: number) =>
     new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n);
 
