@@ -159,6 +159,7 @@ const Loans = () => {
                         <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rate</th>
                         <th className="text-left px-4 py-3 font-medium text-muted-foreground">Issued</th>
                         <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Action</th>
                       </tr>
                     </thead>
                     <tbody>
