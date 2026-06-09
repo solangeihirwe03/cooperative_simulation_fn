@@ -157,6 +157,12 @@ const Dashboard = () => {
           icon={<Wallet className="w-6 h-6" />}
           trend={{ value: `${contributions.length} contributors`, positive: true }}
         />
+        <StatCard
+          title="Total Income"
+          value={`${formatRWF(totalIncome)} RWF`}
+          icon={<TrendingUp className="w-6 h-6" />}
+          trend={{ value: "Loans + Penalties", positive: true }}
+        />
       </div>
 
       {/* Members Table */}
