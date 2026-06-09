@@ -43,6 +43,7 @@ const Dashboard = () => {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loans, setLoans] = useState<MemberLoan[]>([]);
   const [contributions, setContributions] = useState<MemberContributionSummary[]>([]);
+  const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [selectedMember, setSelectedMember] = useState<AdminMember | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
