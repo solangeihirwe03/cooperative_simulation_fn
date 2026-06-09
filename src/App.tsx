@@ -15,6 +15,7 @@ import Loans from "./pages/Loans.tsx";
 import Contributions from "./pages/Contibutions.tsx";
 import Payments from "./pages/Payments.tsx";
 import RequestLoan from "./pages/RequestLoan.tsx";
+import Penalties from "./pages/Penalties.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/contributions" element={<Contributions />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/request-loan" element={<RequestLoan />} />
+            <Route path="/penalties" element={<Penalties />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
