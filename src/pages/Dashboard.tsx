@@ -5,7 +5,7 @@ import { Users, FileText, Wallet, Banknote, ArrowRight, Building, Eye, TrendingU
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
-import { adminApi, policiesApi, type AdminMember, type Policy, type MemberContributionSummary, type MemberLoan } from "@/lib/api";
+import { adminApi, policiesApi, type AdminMember, type Policy, type MemberContributionSummary, type MemberLoan, type Penalty } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
