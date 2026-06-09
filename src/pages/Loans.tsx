@@ -189,6 +189,15 @@ const Loans = () => {
                               </SelectContent>
                             </Select>
                           </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleViewLoan(loan.loan_id)}
+                              className="p-1.5 rounded-md hover:bg-muted transition-colors text-primary"
+                              title="View loan details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
