@@ -56,6 +56,7 @@ const Dashboard = () => {
     policiesApi.getAll().then(setPolicies).catch(() => {});
     adminApi.getAllLoans().then(setLoans).catch(() => {});
     adminApi.getAllContributions().then(setContributions).catch(() => {});
+    adminApi.getAllPenalties().then(setPenalties).catch(() => {});
   }, [fetchMembers]);
 
   const totalMembers = members.length;
