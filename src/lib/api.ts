@@ -175,6 +175,7 @@ export const adminApi = {
       body: JSON.stringify(data),
     }),
   getAllLoans: () => request<MemberLoan[]>("/loans/members"),
+  getLoan: (loanId: number) => request<MemberLoan>(`/loans/admin/${loanId}`),
   getMemberLoans: (memberId: number) =>
     request<MemberLoan[]>(`/loans/${memberId}`),
   updateLoanStatus: (loanId: number, loanStatus: LoanStatus) =>

@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { adminApi, type AdminMember, type MemberLoan, type LoanStatus } from "@/lib/api";
 import { toast } from "sonner";
-import { FileText } from "lucide-react";
+import { FileText, Eye } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const LOAN_STATUSES: LoanStatus[] = ["pending", "approved", "active", "completed", "cancelled"];
 
@@ -24,6 +25,9 @@ const Loans = () => {
   const [loanSearch, setLoanSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [updatingLoanId, setUpdatingLoanId] = useState<number | null>(null);
+  const [detailLoan, setDetailLoan] = useState<MemberLoan | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const fetchLoans = () => {
     setLoansLoading(true);
@@ -58,6 +62,19 @@ const Loans = () => {
       toast.error(err.message || "Failed to update status");
     } finally {
       setUpdatingLoanId(null);
+    }
+  };
+
+  const handleViewLoan = async (loanId: number) => {
+    setDetailOpen(true);
+    setDetailLoading(true);
+    try {
+      const loan = await adminApi.getLoan(loanId);
+      setDetailLoan(loan);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load loan details");
+    } finally {
+      setDetailLoading(false);
     }
   };
 
@@ -142,6 +159,7 @@ const Loans = () => {
                         <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rate</th>
                         <th className="text-left px-4 py-3 font-medium text-muted-foreground">Issued</th>
                         <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -171,6 +189,15 @@ const Loans = () => {
                               </SelectContent>
                             </Select>
                           </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleViewLoan(loan.loan_id)}
+                              className="p-1.5 rounded-md hover:bg-muted transition-colors text-primary"
+                              title="View loan details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -180,6 +207,67 @@ const Loans = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Loan Details</DialogTitle>
+            <DialogDescription>
+              {detailLoan ? `Loan #${detailLoan.loan_id}` : "Loading..."}
+            </DialogDescription>
+          </DialogHeader>
+          {detailLoading ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Loading details...</div>
+          ) : detailLoan ? (
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Member</p>
+                <p className="font-semibold text-foreground">{getMemberName(detailLoan.member_id)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Status</p>
+                <Badge variant="outline" className={`${statusBadge[detailLoan.loan_status as LoanStatus] || ""} capitalize`}>
+                  {detailLoan.loan_status}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Loan Amount</p>
+                <p className="font-semibold text-foreground">{detailLoan.loan_amount.toLocaleString()} RWF</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Interest Rate</p>
+                <p className="font-semibold text-foreground">{detailLoan.interest_rate}%</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Repayment Period</p>
+                <p className="font-semibold text-foreground">{detailLoan.repayment_period} months</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Issue Date</p>
+                <p className="font-semibold text-foreground">{new Date(detailLoan.issue_date).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Interest Payable</p>
+                <p className="font-semibold text-foreground">{detailLoan.interest_payable.toLocaleString()} RWF</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Repayment Amount</p>
+                <p className="font-semibold text-foreground">{detailLoan.repayment_amount.toLocaleString()} RWF</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Amount Paid</p>
+                <p className="font-semibold text-foreground">{detailLoan.amount_paid.toLocaleString()} RWF</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Loan Balance</p>
+                <p className="font-semibold text-foreground">{detailLoan.loan_balance.toLocaleString()} RWF</p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-sm text-muted-foreground">Failed to load loan details</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
