@@ -1,13 +1,17 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt, HandCoins } from "lucide-react";
+import { LayoutDashboard, FileText, FlaskConical, User, LogOut, Banknote, Wallet, Receipt, HandCoins, AlertTriangle } from "lucide-react";
 import { authApi } from "@/lib/api";
-import { Button } from "react-day-picker";
+
+interface AppSidebarProps {
+  onNavigate?: () => void;
+}
 
 const adminNavItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/loans", label: "Loan Management", icon: Banknote },
   { to: "/request-loan", label: "Request Loan", icon: HandCoins },
   { to: "/payments", label: "Payments", icon: Receipt },
+  { to: "/penalties", label: "Penalties", icon: AlertTriangle },
   { to: "/contributions", label: "Contributions", icon: Wallet },
   { to: "/policy", label: "Policy Entry", icon: FileText },
   { to: "/simulation", label: "Simulation", icon: FlaskConical },
@@ -19,7 +23,7 @@ const memberNavItems = [
   { to: "/profile", label: "My Profile", icon: User },
 ];
 
-const AppSidebar = () => {
+const AppSidebar = ({ onNavigate }: AppSidebarProps = {}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const role = localStorage.getItem("user_role");
@@ -32,19 +36,20 @@ const AppSidebar = () => {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex flex-col z-50">
-      <div className="p-6 border-b border-border">
+    <aside className="h-screen w-64 bg-card border-r border-border flex flex-col">
+      <div className="p-6 border-b border-border shrink-0">
         <h1 className="font-display text-xl font-bold text-gradient">CoopSim</h1>
         <p className="text-xs text-muted-foreground mt-1">Decision Support System</p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <Link
               key={item.to}
               to={item.to}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-accent text-accent-foreground"
@@ -58,7 +63,7 @@ const AppSidebar = () => {
         })}
       </nav>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border shrink-0">
         <button
            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
             onClick={handleLogout}
