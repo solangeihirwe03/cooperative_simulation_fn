@@ -221,7 +221,7 @@ export interface Penalty {
 
 export const penaltiesApi = {
   pay: (penaltyId: number, amount: number) =>
-    request<Penalty>(`/admin/penalties/${penaltyId}/pay`, {
+    request<Penalty>(`/members/penalties/${penaltyId}/pay`, {
       method: "POST",
       body: JSON.stringify({ amount }),
     }),
