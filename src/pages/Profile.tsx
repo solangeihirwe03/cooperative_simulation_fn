@@ -345,7 +345,7 @@ const Profile = () => {
                           </TableRow>
                         ) : penalties.map((p) => {
                           const paid = p.amount_paid ?? 0;
-                          const balance = p.amount - paid;
+                          const balance = getPenaltyBalance(p);
                           const isPaid = p.status === "paid" || balance <= 0;
                           return (
                             <TableRow key={p.penalty_id}>
@@ -362,7 +362,7 @@ const Profile = () => {
                               <TableCell className="text-muted-foreground">{new Date(p.date_issued).toLocaleDateString()}</TableCell>
                               <TableCell className="text-right">
                                 {!isPaid ? (
-                                  <Button size="sm" onClick={() => openPay(p)} className="gradient-primary text-primary-foreground">
+                                  <Button type="button" size="sm" onClick={() => openPay(p)} className="gradient-primary text-primary-foreground">
                                     Pay
                                   </Button>
                                 ) : (
@@ -387,7 +387,7 @@ const Profile = () => {
           <DialogHeader>
             <DialogTitle>Pay Penalty</DialogTitle>
             <DialogDescription>
-              {payTarget ? `Penalty P-${payTarget.penalty_id} • Balance ${fmt(payTarget.amount - (payTarget.amount_paid ?? 0))}` : ""}
+              {payTarget ? `Penalty P-${payTarget.penalty_id} • Balance ${fmt(getPenaltyBalance(payTarget))}` : ""}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePay} className="space-y-4">
@@ -396,6 +396,8 @@ const Profile = () => {
               <Input
                 type="number"
                 min="1"
+                max={payTarget ? getPenaltyBalance(payTarget) : undefined}
+                step="any"
                 value={payAmount}
                 onChange={(e) => setPayAmount(e.target.value)}
                 required
