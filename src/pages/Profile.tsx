@@ -83,9 +83,15 @@ const Profile = () => {
   const reloadPenalties = () =>
     memberApi.getMyPenalties().then(setPenalties).catch(() => {});
 
+  const getPenaltyBalance = (penalty: Penalty) => {
+    const amount = Number(penalty.amount ?? 0);
+    const paid = Number(penalty.amount_paid ?? 0);
+    return Math.max(amount - paid, 0);
+  };
+
   const openPay = (p: Penalty) => {
     setPayTarget(p);
-    const balance = p.amount - (p.amount_paid ?? 0);
+    const balance = getPenaltyBalance(p);
     setPayAmount(balance > 0 ? balance.toString() : "");
     setPayOpen(true);
   };
@@ -93,12 +99,30 @@ const Profile = () => {
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!payTarget || !payAmount) return;
+    const amount = Number(payAmount);
+    const balance = getPenaltyBalance(payTarget);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast({ title: "Enter a valid payment amount", variant: "destructive" });
+      return;
+    }
+
+    if (amount > balance) {
+      toast({ title: "Amount is higher than the penalty balance", variant: "destructive" });
+      return;
+    }
+
     setPaying(true);
     try {
-      await penaltiesApi.pay(payTarget.penalty_id, Number(payAmount));
+      const updatedPenalty = await penaltiesApi.pay(payTarget.penalty_id, amount);
+      setPenalties((current) =>
+        current.map((penalty) =>
+          penalty.penalty_id === updatedPenalty.penalty_id ? updatedPenalty : penalty
+        )
+      );
       toast({ title: "Penalty payment recorded" });
       setPayOpen(false);
-      reloadPenalties();
+      await reloadPenalties();
     } catch (err: unknown) {
       toast({
         title: "Payment failed",
@@ -321,7 +345,7 @@ const Profile = () => {
                           </TableRow>
                         ) : penalties.map((p) => {
                           const paid = p.amount_paid ?? 0;
-                          const balance = p.amount - paid;
+                          const balance = getPenaltyBalance(p);
                           const isPaid = p.status === "paid" || balance <= 0;
                           return (
                             <TableRow key={p.penalty_id}>
@@ -338,7 +362,7 @@ const Profile = () => {
                               <TableCell className="text-muted-foreground">{new Date(p.date_issued).toLocaleDateString()}</TableCell>
                               <TableCell className="text-right">
                                 {!isPaid ? (
-                                  <Button size="sm" onClick={() => openPay(p)} className="gradient-primary text-primary-foreground">
+                                  <Button type="button" size="sm" onClick={() => openPay(p)} className="gradient-primary text-primary-foreground">
                                     Pay
                                   </Button>
                                 ) : (
@@ -363,7 +387,7 @@ const Profile = () => {
           <DialogHeader>
             <DialogTitle>Pay Penalty</DialogTitle>
             <DialogDescription>
-              {payTarget ? `Penalty P-${payTarget.penalty_id} • Balance ${fmt(payTarget.amount - (payTarget.amount_paid ?? 0))}` : ""}
+              {payTarget ? `Penalty P-${payTarget.penalty_id} • Balance ${fmt(getPenaltyBalance(payTarget))}` : ""}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePay} className="space-y-4">
@@ -372,6 +396,8 @@ const Profile = () => {
               <Input
                 type="number"
                 min="1"
+                max={payTarget ? getPenaltyBalance(payTarget) : undefined}
+                step="any"
                 value={payAmount}
                 onChange={(e) => setPayAmount(e.target.value)}
                 required
