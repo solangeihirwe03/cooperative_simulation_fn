@@ -215,11 +215,13 @@ export interface Penalty {
   reason: string;
   status: string;
   date_issued: string;
+  issued_at?: string;
+  cooperative_id?: number;
 }
 
 export const penaltiesApi = {
   pay: (penaltyId: number, amount: number) =>
-    request<Penalty>(`/penalties/${penaltyId}/pay`, {
+    request<Penalty>(`/admin/penalties/${penaltyId}/pay`, {
       method: "POST",
       body: JSON.stringify({ amount }),
     }),
