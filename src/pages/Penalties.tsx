@@ -1,11 +1,13 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { AlertTriangle, Search, Users } from "lucide-react";
+import { AlertTriangle, Search, Users, Plus } from "lucide-react";
 import { adminApi, type Penalty, type AdminMember } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 const fmt = (n: number) =>
@@ -29,6 +31,11 @@ const Penalties = () => {
   const [memberFilter, setMemberFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [pMemberId, setPMemberId] = useState<string>("");
+  const [pAmount, setPAmount] = useState("200");
+  const [pReason, setPReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -48,6 +55,32 @@ const Penalties = () => {
   useEffect(() => {
     adminApi.getMembers().then(setMembers).catch(() => {});
   }, []);
+
+  const handleIssue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pMemberId || !pAmount || !pReason) return;
+    setSubmitting(true);
+    try {
+      await adminApi.createPenalty(Number(pMemberId), {
+        amount: Number(pAmount),
+        reason: pReason,
+      });
+      toast({ title: "Penalty issued" });
+      setOpen(false);
+      setPMemberId("");
+      setPAmount("200");
+      setPReason("");
+      load();
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to issue penalty",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const memberName = (id: number) => {
     const m = members.find((x) => x.member_id === id);
@@ -70,9 +103,14 @@ const Penalties = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Penalties</h1>
-          <p className="text-muted-foreground text-sm mt-1">All penalties issued across the cooperative</p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground">Penalties</h1>
+            <p className="text-muted-foreground text-sm mt-1">All penalties issued across the cooperative</p>
+          </div>
+          <Button onClick={() => setOpen(true)} className="gradient-primary text-primary-foreground">
+            <Plus className="w-4 h-4 mr-2" /> Issue Penalty
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -152,6 +190,59 @@ const Penalties = () => {
           </Table>
         </div>
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Issue Penalty</DialogTitle>
+            <DialogDescription>Manually penalize a cooperative member.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleIssue} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Member</label>
+              <Select value={pMemberId} onValueChange={setPMemberId}>
+                <SelectTrigger><SelectValue placeholder="Select a member" /></SelectTrigger>
+                <SelectContent>
+                  {members.map((m) => (
+                    <SelectItem key={m.member_id} value={m.member_id.toString()}>
+                      {m.first_name} {m.last_name} ({m.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount (RWF)</label>
+              <Input
+                type="number"
+                min="1"
+                value={pAmount}
+                onChange={(e) => setPAmount(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Reason</label>
+              <Input
+                placeholder="e.g. missed contribution"
+                value={pReason}
+                onChange={(e) => setPReason(e.target.value)}
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button
+                type="submit"
+                disabled={submitting || !pMemberId || !pAmount || !pReason}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {submitting ? "Issuing…" : "Issue Penalty"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
