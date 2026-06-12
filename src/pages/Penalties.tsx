@@ -90,13 +90,23 @@ const Penalties = () => {
     return m ? `${m.first_name} ${m.last_name}` : `M-${id}`;
   };
 
+  const inDateRange = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (dateFrom && d < new Date(dateFrom + "T00:00:00")) return false;
+    if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+    return true;
+  };
+
   const filtered = useMemo(
     () =>
-      penalties.filter((p) =>
-        memberName(p.member_id).toLowerCase().includes(search.toLowerCase()) ||
-        p.reason.toLowerCase().includes(search.toLowerCase())
-      ),
-    [penalties, search, members]
+      penalties.filter((p) => {
+        const matchesSearch =
+          memberName(p.member_id).toLowerCase().includes(search.toLowerCase()) ||
+          p.reason.toLowerCase().includes(search.toLowerCase());
+        const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+        return matchesSearch && matchesStatus && inDateRange(p.date_issued);
+      }),
+    [penalties, search, members, statusFilter, dateFrom, dateTo]
   );
 
   const totalPenalty = penalties.reduce((s, p) => s + p.amount, 0);
@@ -125,7 +135,7 @@ const Penalties = () => {
         <div className="glass-elevated rounded-xl p-6">
           <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
             <h3 className="font-display font-semibold text-foreground">Penalty Records</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={memberFilter} onValueChange={setMemberFilter}>
                 <SelectTrigger className="w-56"><SelectValue placeholder="Filter by member" /></SelectTrigger>
                 <SelectContent>
@@ -137,6 +147,29 @@ const Penalties = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Filter status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="partial">Partial</SelectItem>
+                </SelectContent>
+              </Select>
+              <input
+                type="date"
+                title="From date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-40"
+              />
+              <input
+                type="date"
+                title="To date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-40"
+              />
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input

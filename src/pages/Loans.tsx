@@ -146,6 +146,20 @@ const Loans = () => {
                   ))}
                 </SelectContent>
             </Select>
+            <input
+              type="date"
+              title="From date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-40"
+            />
+            <input
+              type="date"
+              title="To date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-40"
+            />
           </div>
 
           <div className="glass-elevated rounded-xl overflow-hidden">
