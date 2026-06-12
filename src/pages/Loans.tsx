@@ -24,6 +24,8 @@ const Loans = () => {
   const [loansLoading, setLoansLoading] = useState(true);
   const [loanSearch, setLoanSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [updatingLoanId, setUpdatingLoanId] = useState<number | null>(null);
   const [detailLoan, setDetailLoan] = useState<MemberLoan | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);

@@ -13,6 +13,8 @@ const Payments = () => {
   const [loans, setLoans] = useState<MemberLoan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   // create form
   const [createOpen, setCreateOpen] = useState(false);

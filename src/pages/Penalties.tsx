@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { AlertTriangle, Search, Users, Plus } from "lucide-react";
+import { AlertTriangle, Search, Users, Plus, Calendar } from "lucide-react";
 import { adminApi, type Penalty, type AdminMember } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
