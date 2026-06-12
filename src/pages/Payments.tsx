@@ -13,6 +13,8 @@ const Payments = () => {
   const [loans, setLoans] = useState<MemberLoan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   // create form
   const [createOpen, setCreateOpen] = useState(false);
@@ -80,12 +82,20 @@ const Payments = () => {
     }
   };
 
+  const inDateRange = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (dateFrom && d < new Date(dateFrom + "T00:00:00")) return false;
+    if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+    return true;
+  };
+
   const filtered = payments.filter((p) => {
     const q = search.toLowerCase();
     return (
-      memberName(p.member_id).toLowerCase().includes(q) ||
-      p.loan_id.toString().includes(q) ||
-      p.payment_id.toString().includes(q)
+      (memberName(p.member_id).toLowerCase().includes(q) ||
+        p.loan_id.toString().includes(q) ||
+        p.payment_id.toString().includes(q)) &&
+      inDateRange(p.payment_date)
     );
   });
 
@@ -124,14 +134,30 @@ const Payments = () => {
           </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search by member, loan ID or payment ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
           <input
-            type="text"
-            placeholder="Search by member, loan ID or payment ID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            type="date"
+            title="From date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-40"
+          />
+          <input
+            type="date"
+            title="To date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-40"
           />
         </div>
 

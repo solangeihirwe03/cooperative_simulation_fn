@@ -24,6 +24,8 @@ const Loans = () => {
   const [loansLoading, setLoansLoading] = useState(true);
   const [loanSearch, setLoanSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [updatingLoanId, setUpdatingLoanId] = useState<number | null>(null);
   const [detailLoan, setDetailLoan] = useState<MemberLoan | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -78,11 +80,18 @@ const Loans = () => {
     }
   };
 
+  const inDateRange = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (dateFrom && d < new Date(dateFrom + "T00:00:00")) return false;
+    if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+    return true;
+  };
+
   const filteredLoans = allLoans.filter((loan) => {
     const matchesStatus = statusFilter === "all" || loan.loan_status === statusFilter;
     const name = getMemberName(loan.member_id).toLowerCase();
     const matchesSearch = name.includes(loanSearch.toLowerCase()) || loan.loan_id.toString().includes(loanSearch);
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesSearch && inDateRange(loan.issue_date);
   });
 
   const loanStats = {
@@ -137,6 +146,20 @@ const Loans = () => {
                   ))}
                 </SelectContent>
             </Select>
+            <input
+              type="date"
+              title="From date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-40"
+            />
+            <input
+              type="date"
+              title="To date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 w-full sm:w-40"
+            />
           </div>
 
           <div className="glass-elevated rounded-xl overflow-hidden">
