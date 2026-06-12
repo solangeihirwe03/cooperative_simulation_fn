@@ -29,7 +29,10 @@ const Penalties = () => {
   const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [memberFilter, setMemberFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [pMemberId, setPMemberId] = useState<string>("");

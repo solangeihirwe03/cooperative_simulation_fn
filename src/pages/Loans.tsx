@@ -80,11 +80,18 @@ const Loans = () => {
     }
   };
 
+  const inDateRange = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (dateFrom && d < new Date(dateFrom + "T00:00:00")) return false;
+    if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+    return true;
+  };
+
   const filteredLoans = allLoans.filter((loan) => {
     const matchesStatus = statusFilter === "all" || loan.loan_status === statusFilter;
     const name = getMemberName(loan.member_id).toLowerCase();
     const matchesSearch = name.includes(loanSearch.toLowerCase()) || loan.loan_id.toString().includes(loanSearch);
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesSearch && inDateRange(loan.issue_date);
   });
 
   const loanStats = {

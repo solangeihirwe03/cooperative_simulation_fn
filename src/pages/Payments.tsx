@@ -82,12 +82,20 @@ const Payments = () => {
     }
   };
 
+  const inDateRange = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (dateFrom && d < new Date(dateFrom + "T00:00:00")) return false;
+    if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+    return true;
+  };
+
   const filtered = payments.filter((p) => {
     const q = search.toLowerCase();
     return (
-      memberName(p.member_id).toLowerCase().includes(q) ||
-      p.loan_id.toString().includes(q) ||
-      p.payment_id.toString().includes(q)
+      (memberName(p.member_id).toLowerCase().includes(q) ||
+        p.loan_id.toString().includes(q) ||
+        p.payment_id.toString().includes(q)) &&
+      inDateRange(p.payment_date)
     );
   });
 
